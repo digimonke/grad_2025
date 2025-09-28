@@ -1,26 +1,39 @@
 import streamlit as st
 import pandas as pd
-import networkx as nx
-from cdt.causality.graph import GES, LiNGAM, CAM, PC, GS
-from pyvis.network import Network
+from causallearn.search.ConstraintBased.PC import pc
+from causallearn.search.ScoreBased.GES import ges
+from causallearn.search.FCMBased import lingam
+from causallearn.utils.GraphUtils import GraphUtils
+import matplotlib.pyplot as plt
 
-st.title("Causal Discovery Demo")
+st.title("Causal Discovery App")
+st.write("Upload an Excel file to run a causal inference algorithm and view the resulting graph.")
 
-uploaded_file = st.file_uploader("Upload your CSV", type=["csv"])
+uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xls", "csv"])
 
 if uploaded_file is not None:
     data = pd.read_csv(uploaded_file)
-    st.write("Data Preview:", data.head())
+    st.write("Preview of data:", data.head())
+
+    algo = st.selectbox(
+        "Select Causal Discovery Algorithm",
+        ["PC", "GES", "LiNGAM"]
+    )
 
     if st.button("Run Causal Discovery"):
-        # 1. Fit a graph model
-        obj = PC()  # You can swap in GES, LiNGAM, etc.
-        output_graph = obj.predict(data)
+        # Convert to numpy
+        data_np = data.to_numpy()
 
-        # 2. Display as an interactive graph
-        net = Network(notebook=False, directed=True)
-        net.from_nx(output_graph)
+        if algo == "PC":
+            cg = pc(data_np, alpha=0.05)  # alpha is significance level
+        elif algo == "GES":
+            cg = ges(data_np)
+        elif algo == "LiNGAM":
+            cg = lingam(data_np)
 
-        net.save_graph("graph.html")
-        st.success("Graph generated!")
-        st.components.v1.html(open("graph.html", 'r').read(), height=500)
+        st.success("Causal graph generated!")
+
+        # Using causal-learn built-in graph plotting
+        fig = plt.figure(figsize=(8,6))
+        GraphUtils.plot_graph(cg.G, labels=data.columns)
+        st.pyplot(fig)
