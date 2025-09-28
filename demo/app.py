@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import networkx as nx
-from cdt.causality.graph import PC  # one of CDT’s algorithms
+from cdt.causality.graph import GES, LiNGAM, CAM, PC, GS
 from pyvis.network import Network
 
 st.title("Causal Discovery Demo")
