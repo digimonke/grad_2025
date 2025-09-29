@@ -3,6 +3,7 @@ This is the source code for my graduation program thesis at VNU HCMUS. The goal 
 
 ## Data Generator
 Utilize package bnlearn to generate synthetic data used for causal structure learning.
+Graph data is downloaded from here https://www.bnlearn.com/bnrepository/
 
 ## Demo
 A minimal streamlit app to test out the features
