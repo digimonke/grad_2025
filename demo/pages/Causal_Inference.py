@@ -3,7 +3,7 @@ from causallearn.search.ScoreBased.GES import ges
 import utils
 import streamlit as st
 
-st.title("Causal Discovery App")
+st.title("Causal Inference")
 st.write("Upload an Excel file to run a causal inference algorithm and view the resulting graph.")
 
 uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx", "xls", "csv"])
