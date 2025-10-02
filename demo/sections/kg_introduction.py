@@ -192,7 +192,7 @@ def example_1():
 
     st.pyplot(plt)
 
-def tab_introduction():
+def render():
     st.header("Định nghĩa")
     st.write("""
     Đồ thị tri thức, tiền thân là mạng ngữ nghĩa là cấu trúc dữ liệu đồ thị được phát triển nhằm hỗ trợ suy luận (reasoning) cho các thuật toán trí tuệ nhân tạo.
