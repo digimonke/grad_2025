@@ -5,10 +5,9 @@ import altair as alt
 
 def render():
     st.header("Tính không đầy đủ")
-    st.subheader("Khái niệm")
-    st.write(
+    st.info(
         """
-        Tính không đầy đủ (incompleteness) đề cập đến thực tế rằng đồ thị tri thức (KG) không bao quát đầy đủ các thực thể, thuộc tính, và quan hệ tồn tại trong thế giới thực. 
+        **Tính không đầy đủ (incompleteness)** đề cập đến thực tế rằng đồ thị tri thức (KG) không bao quát đầy đủ các thực thể, thuộc tính, và quan hệ tồn tại trong thế giới thực. 
         Nói cách khác, nhiều bộ ba (triples) đúng có thể chưa được biết hoặc có các bộ ba sai lệch do thiếu dữ liệu, lỗi trích xuất, hoặc hạn chế trong phạm vi bản thể học.
         """
     )

@@ -4,9 +4,8 @@ import streamlit.components.v1 as components
 
 def render():
     st.header("Bản thể học")
-    st.subheader("Khái niệm ngắn gọn")
-    st.write("""
-    Bản thể học (Ontology) trong ngữ cảnh đồ thị tri thức là đặc tả hình thức của các khái niệm (classes), thuộc tính/quan hệ (properties) và các ràng buộc (constraints) giữa chúng trong một miền tri thức. 
+    st.info("""
+    **Bản thể học (Ontology)** trong ngữ cảnh đồ thị tri thức là đặc tả hình thức của các khái niệm (classes), thuộc tính/quan hệ (properties) và các ràng buộc (constraints) giữa chúng trong một miền tri thức. 
     Nó đóng vai trò là “lược đồ ngữ nghĩa” thống nhất, giúp con người và máy tính cùng hiểu, tích hợp và suy luận trên dữ liệu.
     """)
 
