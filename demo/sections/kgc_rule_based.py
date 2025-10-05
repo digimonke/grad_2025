@@ -31,6 +31,7 @@ def AIME():
         - **Add Instantiated Atom (AI)**: thêm một nguyên tử mới với ít nhất 1 biến là thực thể thuộc đồ thị và có chung biến còn lại (thực thể hoặc lớp) với bộ quy tắc đang được khai thác.
         """
     )
+    st.write("Quá trình rule mining sẽ được thực hiện tuần tự ")
 
 def render():
     st.header("Phương pháp dựa trên quy tắc")
@@ -50,23 +51,29 @@ def render():
     (x, \text{is\_parent\_of}, y) \land (y, \text{is\_parent\_of}, z) \rightarrow (x, \text{is\_grandparent\_of}, z)
     """)
 
-    # supports
-    st.write("Khi một quy tắc mới được khai thác từ đồ thị, ta cần đánh giá chất lượng của quy tắc mới được khai thác")
-    st.markdown("""
-        **Support**: số lượng bộ ba r(x,y) thoả mãn:
-        - Đường đi giữa x và y tồn tại trong đồ thị thông qua chuỗi mệnh đề (Body) của quy tắc.
-        - Giữa x và y tồn tại quan hệ r(x,y) ứng với phần kết luận (Head) của quy tắc.
-    """)
-
     # pros and cons
     st.write("**Ưu điểm**: minh bạch và khả diễn, không cần dữ liệu huấn luyện lớn. Một bộ quy tắc có thể áp dụng cho nhiều đồ thị khác nhau, giúp mở rộng phạm vi suy luận.")
     st.write("**Nhược điểm**: phụ thuộc vào chất lượng và phạm vi của các quy tắc đã được định nghĩa. Khó khăn trong việc xử lý các mối quan hệ phức tạp hoặc ngữ cảnh đa nghĩa. Hiệu suất suy luận có thể giảm khi áp dụng trên đồ thị lớn với nhiều quy tắc.")
 
-    st.markdown(
-        """
-        - [Reinforced anytime bottom up rule learning for knowledge graph completion](https://arxiv.org/abs/2004.04412)
-        """
-    )
+    st.divider()
+
+    # supports
+    st.write("Nhằm đảm bảo chất lượng của các quy tắc được khai thác từ đồ thị, một số độ đo được phát triển để đánh giá mức độ tin cậy và tính phổ quát của quy tắc đó.")
+    st.markdown(r"""
+        - **Support** số lượng bộ ba $$(x_i,r,y_i)$$ thoả mãn toàn bộ quy tắc thuộc KG.
+        $$
+            support(B^{\rightarrow} \rightarrow (x,r,y)) = \#(x_i,y_i) : body(x_i,y_i) \land head(x_i,y_i)
+        $$
+        - **Standard Confidence** tỉ lệ bộ ba $$(x_i,r,y_i)$$ thoả mãn toàn bộ quy tắc so với số bộ ba $$(x_i,r,y_i)$$ chỉ thoả mãn chuỗi suy luận (Body) của quy tắc.
+        $$
+            confidence(B^{\rightarrow} \rightarrow (x,r,y)) = \frac{\#(x_i,y_i) : body(x_i,y_i) \land head(x_i,y_i)}{\#(x_i,y_i) : body(x_i,y_i)}
+        $$
+        - **Head Coverage** tỉ lệ bộ ba $$(x_i,r,y_i)$$ thoả mãn quy tắc so với tổng số bộ ba $$(x_i,r,y_i)$$ trong KG.
+        $$
+            headCoverage(B^{\rightarrow} \rightarrow (x,r,y)) = \frac{support(B^{\rightarrow} \rightarrow (x,r,y))}{\#(x_i,r,y_i)}
+        $$
+    """)
+    st.write("Ngoài ra, các thuật toán sẽ có các cơ chế đánh gía riêng như độ dài quy tắc, tính mới mẻ hoặc tẩm quan trọng của quy tắc.")
 
     with st.expander("AMIE"):
         AIME()
