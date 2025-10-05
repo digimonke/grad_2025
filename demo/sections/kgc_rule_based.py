@@ -3,7 +3,7 @@ from pyvis.network import Network
 import streamlit.components.v1 as components
 import pandas as pd
 
-def AIME():
+def AMIE():
     st.markdown(
         """
         [AMIE: association rule mining under incomplete evidence in ontological knowledge bases](https://archives.iw3c2.org/www2013/proceedings/p413.pdf) 
@@ -18,7 +18,7 @@ def AIME():
     st.latex(r"""VD: capital(Viet Nam, Ha Noi)""")
 
     # rules
-    st.write("Bộ quy tắc mà AIME muốn khai thác được cấu thành từ một chuỗi nguyên tử và kết luận của nó cũng là một nguyên tử:")
+    st.write("Bộ quy tắc mà AMIE muốn khai thác được cấu thành từ một chuỗi nguyên tử và kết luận của nó cũng là một nguyên tử:")
     columns = st.columns(2)
     with columns[0]:
         st.latex(r"""B_1 \land B_2 \land ... \land B_n \rightarrow r(x, y)""")
@@ -26,7 +26,7 @@ def AIME():
         st.latex(r"""B^{\rightarrow} \rightarrow r(x, y)""")
 
     # operators
-    st.write("Nhằm thu hẹp không gian tìm kiếm, bắt đầu với 1 nguyên tử duy nhất, AIME tuần tự áp dụng 1 trong các phép biến đổi (operators) sau để mở rộng quy tắc hiện tại:")
+    st.write("Nhằm thu hẹp không gian tìm kiếm, bắt đầu với 1 nguyên tử duy nhất, AMIE tuần tự áp dụng 1 trong các phép biến đổi (operators) sau để mở rộng quy tắc hiện tại:")
     st.markdown(
         """
         - **Add Dangling Atom (AD)**: thêm một nguyên tử mới với một biến mới và có chung biến còn lại với bộ quy tắc đang được khai thác.
@@ -34,7 +34,7 @@ def AIME():
         - **Add Instantiated Atom (AI)**: thêm một nguyên tử mới với ít nhất 1 biến là thực thể thuộc đồ thị và có chung biến còn lại (thực thể hoặc lớp) với bộ quy tắc đang được khai thác.
         """
     )
-    st.write("Trong quá trình xây dựng quy tắc, AIME sẽ loại bỏ các quy tắc bị trùng lặp hoặc kém chất lượng dựa trên các tiêu chí như độ dài quy tắc, Head Coverage.")
+    st.write("Trong quá trình xây dựng quy tắc, AMIE sẽ loại bỏ các quy tắc bị trùng lặp hoặc kém chất lượng dựa trên các tiêu chí như độ dài quy tắc, Head Coverage.")
 
     st.subheader("Minh hoạ trực quan")
     st.markdown(
@@ -265,12 +265,12 @@ def render():
     st.divider()
 
     with st.expander("AMIE"):
-        AIME()
+        AMIE()
     with st.expander("Một số công trình nổi bật"):
         st.markdown(
             """
-            - [AMIE+](https://dl.acm.org/doi/10.1007/s00778-015-0394-1?utm_source=chatgpt.com): mở rộng AIME vả tối ưu hoá cách áp dụng các toán tử và loại bỏ các quy tắc thừa.
-            - [AnyBURL](https://www.ijcai.org/proceedings/2019/0435.pdf?utm_source=chatgpt.com): Khác với AIME, AnyBURL bắt đầu với việc trích xuất Horn Rule từ các đường đi ngẫu nhiên giữa hai thực thể trên đồ thị hiện hữu (bắt đầu từ các bộ ba hiện hữu và tổng quát hoá thành quy tắc).
+            - [AMIE+](https://dl.acm.org/doi/10.1007/s00778-015-0394-1?utm_source=chatgpt.com): mở rộng AMIE vả tối ưu hoá cách áp dụng các toán tử và loại bỏ các quy tắc thừa.
+            - [AnyBURL](https://www.ijcai.org/proceedings/2019/0435.pdf?utm_source=chatgpt.com): Khác với AMIE, AnyBURL bắt đầu với việc trích xuất Horn Rule từ các đường đi ngẫu nhiên giữa hai thực thể trên đồ thị hiện hữu (bắt đầu từ các bộ ba hiện hữu và tổng quát hoá thành quy tắc).
             - Trong những năm gần đây, các nghiên cứu mới dần chuyển dịch sang kết hợp việc khai thác quy tắc và nhúng đồ thị (graph embedding) để tận dụng ưu điểm của cả hai phương pháp. Một số công trình có thể kể đến như (RUGE)[https://arxiv.org/abs/1711.11231?utm_source=chatgpt.com] và [IterE](https://arxiv.org/abs/1903.08948?utm_source=chatgpt.com).
             """
         )
