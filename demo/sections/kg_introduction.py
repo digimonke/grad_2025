@@ -193,13 +193,12 @@ def example_1():
     st.pyplot(plt)
 
 def render():
-    st.header("Định nghĩa")
     st.write("""
     Đồ thị tri thức, tiền thân là mạng ngữ nghĩa là cấu trúc dữ liệu đồ thị được phát triển nhằm hỗ trợ suy luận (reasoning) cho các thuật toán trí tuệ nhân tạo.
     """)
-    st.write("""
-    Theo định nghĩa của Resource Description Framework (RDF), đồ thị tri thức là một tập hợp các bộ ba (triple) có dạng (chủ thể, quan hệ, đối tượng) hay (subject, predicate, object).
-    Mỗi bộ ba này biểu diễn một mối quan hệ giữa hai thực thể (entities) trong đồ thị. Chẳng hạn, bộ ba (Hút Thuốc, dẫn đến, Ung Thư Phổi) biểu diễn mối quan hệ "dẫn đến" giữa thực thể "Hút Thuốc" và thực thể "Ung Thư Phổi".
+    st.info("""
+    Đồ thị tri thức được xây dựng dựa trên **Resource Description Framework (RDF)**, là một tập hợp các bộ ba (triple) có dạng **(chủ thể, quan hệ, đối tượng)** hay **(subject, predicate, object)**.
+    Mỗi bộ ba này biểu diễn một mối quan hệ giữa hai thực thể (entities) trong đồ thị. Chẳng hạn, bộ ba (Việt Nam, thủ đô, Hà Nội) biểu diễn mối quan hệ "thủ đô" giữa thực thể "Việt Nam" và thực thể "Hà Nội".
     """)
 
     st.write("""
