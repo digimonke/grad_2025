@@ -269,7 +269,7 @@ def render():
     with st.expander("Một số công trình nổi bật"):
         st.markdown(
             """
-            - [AMIE+](https://dl.acm.org/doi/10.1007/s00778-015-0394-1?utm_source=chatgpt.com): mở rộng AMIE vả tối ưu hoá cách áp dụng các toán tử và loại bỏ các quy tắc thừa.
+            - [AMIE+](https://dl.acm.org/doi/10.1007/s00778-015-0394-1?utm_source=chatgpt.com): mở rộng AMIE và tối ưu hoá cách áp dụng các toán tử và loại bỏ các quy tắc thừa.
             - [AnyBURL](https://www.ijcai.org/proceedings/2019/0435.pdf?utm_source=chatgpt.com): Khác với AMIE, AnyBURL bắt đầu với việc trích xuất Horn Rule từ các đường đi ngẫu nhiên giữa hai thực thể trên đồ thị hiện hữu (bắt đầu từ các bộ ba hiện hữu và tổng quát hoá thành quy tắc).
             - Trong những năm gần đây, các nghiên cứu mới dần chuyển dịch sang kết hợp việc khai thác quy tắc và nhúng đồ thị (graph embedding) để tận dụng ưu điểm của cả hai phương pháp. Một số công trình có thể kể đến như (RUGE)[https://arxiv.org/abs/1711.11231?utm_source=chatgpt.com] và [IterE](https://arxiv.org/abs/1903.08948?utm_source=chatgpt.com).
             """
