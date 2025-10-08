@@ -49,17 +49,28 @@ def TransD():
         [**TransD**](https://www.ijcai.org/Proceedings/16/Papers/534.pdf) tiếp tục cải tiến mô hình bằng cách sử dụng các vector đặc trưng riêng biệt cho cả thực thể và quan hệ để xây dựng ma trận chuyển đổi động. Điều này giúp giảm số lượng tham số cần học và tăng khả năng biểu diễn của mô hình.
         """
     )
-    st.latex(r"f_r(h, t) = {||\mathbf{M}_{r,h} \mathbf{h} + \mathbf{r} - \mathbf{M}_{r,t} \mathbf{t}||}^2_2")
-    cols = st.columns(4)
+    st.markdown("Mỗi thành phần (thực thể hoặc quan hệ) trong đồ thị được cấu thành bởi một cặp vector, một vector để mã hoá ý nghĩa của thành phần đó, và một vector đặc trưng để xây dựng ma trận chuyển đổi.")
+    st.latex(r"\mathbf{h}, \mathbf{h}_p, \mathbf{r}, \mathbf{r}_p, \mathbf{t}, \mathbf{t}_p")
+    cols = st.columns(2)
     with cols[0]:
-        st.latex(r"\mathbf{M}_{r,h} = \mathbf{r}_p \mathbf{h}_p^{\top} + \mathbf{I}")
+        st.latex(r"\mathbf{h}, \mathbf{h}_p, \mathbf{t}, \mathbf{t}_p \in \mathbb{R}^n")
     with cols[1]:
-        st.latex(r"\mathbf{M}_{r,t} = \mathbf{r}_p \mathbf{t}_p^{\top} + \mathbf{I}")
-    with cols[2]:
-        st.latex(r"\mathbf{h},\mathbf{t} \in \mathbb{R}^n")
-    with cols[3]:
-        st.latex(r"\mathbf{r},\mathbf{h}_p,\mathbf{t}_p \in \mathbb{R}^m")
-    st.markdown("TransD khắc phục được nhược điểm về số lượng tham số bằng cách sử dụng các vector đặc trưng riêng biệt cho cả thực thể và quan hệ, từ đó giảm thiểu số lượng tham số cần học.")
+        st.latex(r"\mathbf{r}, \mathbf{r}_p \in \mathbb{R}^m")
+    
+    st.markdown("Với mỗi bộ ba (h, r, t), ta có một cặp ma trận chuyển đổ để ánh xạ thực thể vào không gian đặc trưng của quan hệ:")
+    cols = st.columns(2)
+    with cols[0]:
+        st.latex(r"\mathbf{M}_{rh} = \mathbf{r}_p \mathbf{h}_p^{\top} + \mathbf{I}^{m \times n}")
+    with cols[1]:
+        st.latex(r"\mathbf{M}_{rt} = \mathbf{r}_p \mathbf{t}_p^{\top} + \mathbf{I}^{m \times n}")
+
+    st.markdown("Với cặp ma trận chuyển đổi trên, ta có vector của thực thể h và t trong không gian đặc trưng của quan hệ r và hàm tính điểm của TransD như sau")
+    st.latex(r"f_r(h, t) = {||\mathbf{h}_{\perp} + \mathbf{r} - \mathbf{t}_{\perp}||}^2_2")
+    cols = st.columns(2)
+    with cols[0]:
+        st.latex(r"\mathbf{h}_{\perp} = \mathbf{M}_{rh} \mathbf{h}")
+    with cols[1]:
+        st.latex(r"\mathbf{t}_{\perp} = \mathbf{M}_{rt} \mathbf{t}")
 
 def GeoTranslationals():
     st.markdown(
@@ -80,6 +91,9 @@ def GeoTranslationals():
     TransR()
 
     TransD()
+
+    with st.expander("Minh hoạ trực quan"):
+        st.image("resources/trans.png")
 
 def render():
     st.header("Phương pháp dựa trên học máy")
