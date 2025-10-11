@@ -72,7 +72,7 @@ def TransD():
     with cols[1]:
         st.latex(r"\mathbf{t}_{\perp} = \mathbf{M}_{rt} \mathbf{t}")
 
-def GeoTranslationals():
+def GeoTranslationalsModels():
     st.markdown(
         """
         Các phương pháp thuộc nhóm này xem các thực thể của đồ thị là các điểm tồn tại trong không gian đa chiều, một quan hệ được biểu diễn như một phép tịnh tiến (translation) từ điểm biểu diễn thực thể này sang điểm biểu diễn thực thể khác.
@@ -95,9 +95,83 @@ def GeoTranslationals():
     with st.expander("Minh hoạ trực quan"):
         st.image("resources/trans.png")
 
+def Rescal():
+    st.divider()
+    st.markdown(
+        r"""
+        [**RESCAL**](https://www.cs.utexas.edu/~ai-lab/pubs/2011/nikolentzos-etal-2011-rescal.pdf) là một trong những mô hình tương thích nhúng đầu tiên được đề xuất. Mỗi quan hệ được biểu diễn bằng một ma trận, và hàm tính điểm của bộ ba (h, r, t) được định nghĩa là tích vô hướng giữa vector thực thể h, ma trận quan hệ r và vector thực thể t.
+        Mô hình này hoạt động dựa trên 2 ma trận nhúng:
+        - $$\mathbf{A} \in \mathbb{R}^{n \times d}$$: ma trận nhúng của tập thực thể thuộc đồ thị với d là kích thước của chiều ẩn (latent dimension).
+        - $$\mathbf{R} \in \mathbb{R}^{m \times d \times d}$$: ma trận nhúng của quan hệ thứ k trong đồ thị.
+        """
+    )
+
+    st.markdown("Ma trận kề của quan hệ thứ k được xấp xỉ bởi tích của ma trận nhúng thực thể và ma trận nhúng quan hệ:")
+    st.latex(r"\mathbf{X}^{(k)} \approx \mathbf{A}^{\top} \mathbf{R}^{(k)} \mathbf{A}")
+
+    st.markdown("Xác xuất của bộ ba (h,r,t) tồn tại trong đồ thị:")
+    st.latex(r"f_r(h, t) = \mathbf{a}_h^{\top} \mathbf{R}^{(k)} \mathbf{a}_t")
+
+    st.markdown("Hàm lỗi của RESCAL được định nghĩa như sau:")
+    st.latex(r"\min_{A, \{R^{(k)}\}} \sum_{k=1}^{m} \left\| X^{(k)} - A R^{(k)} A^\top \right\|_{F}^{2} + \lambda \left( \|A\|_{F}^{2} + \sum_{k} \|R^{(k)}\|_{F}^{2} \right)")
+
+def DisMult():
+    st.divider()
+    st.markdown(
+        r"""
+        [**DistMult**](https://arxiv.org/abs/1412.6575) đơn giản hoá RESCAL bằng cách giả định rằng ma trận quan hệ là ma trận chéo. Điều này làm giảm số lượng tham số cần học và tăng hiệu quả tính toán, nhưng giới hạn khả năng biểu diễn các quan hệ không đối xứng.
+        Ma trận thực thể và quan hệ của DistMult có dạng
+        - $$ \mathbf{A} \in \mathbb{R}^{n \times d} $$: ma trận nhúng của tập thực thể thuộc đồ thị với d là kích thước của chiều ẩn (latent dimension).
+        - $$ \mathbf{R} \in \mathbb{R}^{m \times d} $$: ma trận nhúng quan hệ của tập quan hệ thuộc đồ thị.
+        """
+    )
+    st.markdown(
+        """
+        Ma trận kề của quan hệ thứ k được xấp xỉ bởi tích của ma trận nhúng thực thể và ma trận đường chéo được xây dựng từ vector đặc trưng cảu quan hệ thứ k:
+        """
+    )
+    st.latex(r"\mathbf{X}^{(k)} \approx \mathbf{A}^{\top} \text{diag}(\mathbf{r}_k) \mathbf{A}")
+
+    st.markdown("Xác xuất của bộ ba (h,r,t) tồn tại trong đồ thị:")
+    st.latex(r"f_r(h, t) = \mathbf{a}_{h}^{\top} \text{diag}(\mathbf{r}) \mathbf{a}_{t}")
+
+    st.markdown(r"""DisMult tạo mẫu dữ liệu lỗi từ tập dữ liệu huấn luyện bằng cách thay thế ngẫu nhiên chủ thể hoặc đối tượng trong bộ ba. Hàm lỗi của DisMult được định nghĩa như sau:""")
+    st.latex(r"\mathcal{L} = - \sum_{(h,r,t) \in \mathcal{T}} \log \sigma(f_r(h,t)) - \sum_{(h', r, t') \notin \mathcal{T}} \log(1 - \sigma(f_r(h', t')))")
+
+    st.markdown("DisMult cải thiện đáng kể so với RESCAL về hiệu quả tính toán và khả năng mở rộng, đặc biệt trên các đồ thị lớn. Tuy nhiên, do giả định ma trận quan hệ là ma trận chéo, DistMult không thể biểu diễn hiệu quả đồ thị có quan hệ bất đối xứng.")
+
+def SemanticMatchingModels():
+    st.markdown(
+        """
+        Trong khi các mô hình thuộc nhóm phương pháp tịnh tiến vector xem việc biểu diễn một bộ ba là một phép toán vector trong không gian đa chiều. Nhóm phương pháp dựa trên tương thích nhúng
+        xem việc phân lớp một bộ ba (h,r,t) là một phép đo tương thích (similarity) giữa các vector nhúng của thực thể và quan hệ thông qua việc sử dụng phân rã tensor và hàm tính điểm song tuyến tính.
+        """
+    )
+    st.markdown(
+        r"""
+        Một bộ ba (h,r,t) được biểu diễn bởi một tensor bậc 3 $$\mathbf{X} \in \mathbb{R}^{n \times n \times m}$$ 
+        - $$\mathbf{n}$$ là số lượng thực thể của đồ thị
+        - $$\mathbf{m}$$ là số lượng quan hệ của đồ thị
+        - Mỗi mặt cắt $$\mathbf{X}^{(k)} \in \mathbb{R}^{n \times n}$$ biểu diễn ma trận quan hệ thứ k trong đồ thị. Giá trị của phần tử (i,j) trong ma trận này biểu diễn mức độ tương thích giữa thực thể i và thực thể j thông qua quan hệ k.
+        """
+    )
+
+    Rescal()
+
+    DisMult()
+
+    st.divider()
+    st.markdown(
+        """
+        [**ComplEx**](https://proceedings.neurips.cc/paper/2016/hash/dc6a7e655d7f3f3a4de4a8b4a6b9c8f9-Abstract.html) mở rộng DistMult bằng cách sử dụng các vector phức để biểu diễn thực thể và quan hệ. Điều này cho phép mô hình biểu diễn các quan hệ không đối xứng một cách hiệu quả hơn.
+        """
+    )
+
 def render():
     st.header("Phương pháp dựa trên học máy")
     st.info("**Phương pháp học máy (Machine Learning-based)** sử dụng các thuật toán học máy nhằm học được bộ nhúng đồ thị tối ưu chứa đựng biểu diễn của các thực thể và quan hệ trong đồ thị dưới dạng mã hoá và dùng chúng để dự đoán các thành phần còn thiếu.")
     
-    with st.expander("Nhóm phương pháp dựa trên tịnh tiến (Translational) trong không gian đa chiều"):
-        GeoTranslationals()
+    with st.expander("Nhóm phương pháp dựa trên tịnh tiến (Translational) vector trong không gian đa chiều"):
+        GeoTranslationalsModels()
+    with st.expander("Nhóm phương pháp dựa trên tương thích nhúng (Semantic Matching)"):
+        SemanticMatchingModels()
