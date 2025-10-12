@@ -140,6 +140,50 @@ def DisMult():
 
     st.markdown("DisMult cải thiện đáng kể so với RESCAL về hiệu quả tính toán và khả năng mở rộng, đặc biệt trên các đồ thị lớn. Tuy nhiên, do giả định ma trận quan hệ là ma trận chéo, DistMult không thể biểu diễn hiệu quả đồ thị có quan hệ bất đối xứng.")
 
+def ComPlex():
+    st.divider()
+    st.markdown(
+        r"""
+        [**ComplEx**](https://proceedings.neurips.cc/paper/2016/hash/dc6a7e655d7f3f3a4de4a8b4a6b9c8f9-Abstract.html) mở rộng DistMult bằng cách đưa biểu diễn của thực thể và quan hệ vào không gian phức.
+        Điều này cho phép mô hình biểu diễn các quan hệ không đối xứng, nhưng vẫn giữ được tính đơn giản và hiệu quả tính toán mà DisMult mang lại.
+        Ma trận thực thể và quan hệ của ComplEx có dạng
+        - $$ \mathbf{A} \in \mathbb{C}^{n \times d} $$: ma trận nhúng của tập thực thể thuộc đồ thị với d là kích thước của chiều ẩn (latent dimension).
+        - $$ \mathbf{R} \in \mathbb{C}^{m \times d} $$: ma trận nhúng quan hệ của tập quan hệ thuộc đồ thị.
+        """
+    )
+    st.markdown(
+        """
+        Ma trận kề của quan hệ thứ k được xấp xỉ bởi tích của ma trận nhúng thực thể và ma trận đường chéo được xây dựng từ vector đặc trưng cảu quan hệ thứ k:
+        """
+    )
+    st.latex(r"\mathbf{X}^{(k)} \approx Re(\langle \mathbf{A}, \mathbf{R}^{k}, \overline{\mathbf{A}} \rangle)")
+
+    st.markdown("Xác xuất của bộ ba (h,r,t) tồn tại trong đồ thị:")
+    st.latex(r"f_r(h, t) = Re(\langle \mathbf{a}_{h}, \mathbf{r}, \overline{\mathbf{a}_{t}} \rangle) = Re(\sum_{i=1}^{d} a_{h,i} r_i \overline{a_{t,i}})")
+
+    st.markdown(
+        r"""
+        Ý tưởng chính của ComPlex trong việc sử dụng không gian nhúng phức là vận dụng phép liên hợp cho vector nhúng đối tượng t.
+         Việc sử dụng phép liên hợp cho phép mô hình biểu diễn quan hệ không đối xứng (có chiều) được cho thấy thông qua ví dụ sau.
+        """
+    )
+    st.markdown("Ta có")
+    st.latex(r"f_r(h,t) = Re(\sum_{i=1}^{d} a_{h,i} r_i \overline{a_{t,i}})")
+    cols = st.columns(3)
+    with cols[0]:
+        st.latex(r"a_{h,i} = a + ib")
+    with cols[1]:
+        st.latex(r"\overline{a_{t,i}} = c - id")
+    with cols[2]:
+        st.latex(r"r_i = e + if")
+
+    st.latex(r"\implies a_{h,i} \overline{a_{t,i}} = (a + ib)(c - id) = ac + bd + i(bc - ad)")
+    st.latex(r"\implies a_{h,i} r_i \overline{a_{t,i}} = (ac + bd)e - (bc - ad)f + i((ac + bd)f + (bc - ad)e)")
+    st.latex(r"\implies Re(a_{h,i} r_i \overline{a_{t,i}}) = (ac + bd)e - (bc - ad)f")
+    
+    st.markdown(r"Nếu ta hoán đổi vị trí h và t (đảo chiều quan hệ), ta có")
+    st.latex(r"f_r(t,h) = Re(a_{t,i} r_i \overline{a_{h,i}}) = (ac + bd)e + (bc - ad)f")
+
 def SemanticMatchingModels():
     st.markdown(
         """
@@ -160,12 +204,7 @@ def SemanticMatchingModels():
 
     DisMult()
 
-    st.divider()
-    st.markdown(
-        """
-        [**ComplEx**](https://proceedings.neurips.cc/paper/2016/hash/dc6a7e655d7f3f3a4de4a8b4a6b9c8f9-Abstract.html) mở rộng DistMult bằng cách sử dụng các vector phức để biểu diễn thực thể và quan hệ. Điều này cho phép mô hình biểu diễn các quan hệ không đối xứng một cách hiệu quả hơn.
-        """
-    )
+    ComPlex()
 
 def render():
     st.header("Phương pháp dựa trên học máy")
