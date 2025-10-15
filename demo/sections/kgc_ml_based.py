@@ -206,6 +206,122 @@ def SemanticMatchingModels():
 
     ComPlex()
 
+def RNN():
+    st.divider()
+    st.markdown("### 1. Mô hình dựa trên RNN (RNN‑Based Models)")
+    st.markdown(
+        """
+        🧠 **Ý tưởng cốt lõi**  
+        Khác với các mô hình tịnh tiến hay song tuyến tính chỉ hoạt động trong phạm vi một bộ ba, các mô hình dựa trên RNN suy luận **theo đường đi (path)** trong KG — tức là chuỗi các quan hệ nối hai thực thể.  
+        Một đường đi như:
+        """
+    )
+    st.latex(r"h \xrightarrow{r_1} e_1 \xrightarrow{r_2} e_2 \xrightarrow{r_3} t")
+    st.markdown(
+        """
+        mang thông tin thành phần (compositional): nếu $h$ là "Obama", $r_1$ là "born\_in", và $r_2$ là "located\_in" thì đường đi có thể gợi ý quan hệ mục tiêu như $(Obama,\ citizen\_of,\ USA)$.  
+        Một RNN (GRU/LSTM) có thể học cách các vector quan hệ **kết hợp tuần tự** để dự đoán các quan hệ ngầm như vậy.
+        """
+    )
+
+    st.markdown("#### 📩 Input")
+    st.markdown(
+        """
+        - Một chuỗi các quan hệ $[r_1, r_2, \ldots, r_n]$ tạo thành đường đi giữa hai thực thể.  
+        - Tuỳ chọn: thêm nhúng của thực thể đầu/cuối.  
+        - Mỗi quan hệ có một vector nhúng và được đưa vào RNN theo từng bước thời gian.
+        """
+    )
+
+    st.markdown("#### ⚙️ Kiến trúc")
+    st.markdown("1. RNN cập nhật trạng thái ẩn biểu diễn thành phần quan hệ đã đi qua:")
+    st.latex(r"\mathbf{h}_t = \text{RNN}(\mathbf{r}_t, \mathbf{h}_{t-1})")
+    st.markdown("2. Trạng thái ẩn cuối $\mathbf{h}_n$ mã hoá **ngữ nghĩa đường đi** (path meaning).")
+    st.markdown("3. Mô hình chấm điểm độ tương thích giữa biểu diễn đường đi và quan hệ đích (query relation), ví dụ bằng tích vô hướng:")
+    st.latex(r"s(h, r_q, t) = \langle \mathbf{h}_n,\ \mathbf{r}_q \rangle")
+    st.markdown("(có thể đưa qua $\sigma$ hoặc softmax để suy ra xác suất).")
+
+    with st.expander("Ví dụ minh hoạ nhanh"):
+        st.markdown(
+            "- Đường đi: $h$ —born\_in→ $e_1$ —located\_in→ $t$.  ")
+        st.markdown(
+            "- RNN đọc lần lượt $(r_1=\text{born\_in}), (r_2=\text{located\_in})$ để thu được $\mathbf{h}_2$.  ")
+        st.markdown(
+            "- So khớp $\langle \mathbf{h}_2, \mathbf{r}_{q=\text{citizen\_of}} \rangle$ để dự đoán quan hệ mục tiêu giữa $(h, t)$.  "
+        )
+
+def CNN():
+    st.divider()
+    st.markdown("### 2. ConvE (Convolutional Embeddings for Link Prediction)")
+    st.markdown(
+        """
+        🧠 **Ý tưởng cốt lõi**  
+        [ConvE](https://arxiv.org/abs/1707.01476) (Dettmers et al., 2018) đưa **tích chập 2D** vào để mô hình hoá các tương tác phức tạp giữa nhúng thực thể và quan hệ.  
+        Thay vì cộng đơn giản (TransE) hay tích song tuyến tính (DistMult), ConvE **biến đổi nhúng thành ma trận 2D** và áp dụng các bộ lọc tích chập để trích xuất các mẫu đặc trưng cục bộ (local feature patterns).
+        """
+    )
+
+    st.markdown("#### 📩 Input")
+    st.markdown("A triple $(h, r, t)$:")
+    st.markdown("- Nhúng $\mathbf{h},\ \mathbf{r} \in \mathbb{R}^d$")
+    st.markdown("- Reshape mỗi vector thành lưới 2D (ví dụ $\mathbf{h} \in \mathbb{R}^{m\times n}$)")
+    st.markdown("- Nối theo chiều hàng để tạo thành một \"ảnh\" 2D:")
+    st.latex(r"\text{input} = [\text{reshape}(\mathbf{h});\ \text{reshape}(\mathbf{r})]")
+
+    st.markdown("#### ⚙️ Kiến trúc")
+    st.markdown("1. Áp dụng **tích chập 2D** với các bộ lọc học được:")
+    st.latex(r"\mathbf{f} = \text{Conv2D}([\mathbf{h};\ \mathbf{r}])")
+    st.markdown("2. Làm phẳng và chiếu qua một lớp fully-connected (kèm ReLU + Dropout):")
+    st.latex(r"\mathbf{z} = \text{Dropout}(\text{ReLU}(\text{Flatten}(\mathbf{f})\, \mathbf{W}))")
+    st.markdown("3. Tính **điểm** với nhúng của thực thể đích $\mathbf{t}$:")
+    st.latex(r"\varphi(h,r,t) = \sigma(\mathbf{z}^{\top} \mathbf{t})")
+
+def GCN():
+    st.divider()
+    st.markdown("### 3. Relational Graph Convolutional Network (R‑GCN)")
+    st.markdown(
+        """
+        🧠 **Ý tưởng cốt lõi**  
+        [R‑GCN](https://arxiv.org/abs/1703.06103) mở rộng GCN cho **đồ thị đa quan hệ**.  
+        Nhúng của mỗi thực thể được cập nhật bằng cách **tổng hợp thông tin từ láng giềng**, nhưng **mỗi loại quan hệ có một ma trận biến đổi riêng**.  
+        Chính thức, mỗi nút nhận thông điệp từ láng giềng theo các biến đổi phụ thuộc quan hệ.
+        """
+    )
+
+    st.markdown("#### 📩 Input")
+    st.markdown("- Đồ thị $\mathcal{G} = (V, E)$ với các thực thể $V$ và cạnh $(h, r, t) \in E$.")
+    st.markdown("- Nhúng khởi tạo của thực thể $\mathbf{h}_i^{(0)}$.")
+    st.markdown("- Nhúng loại quan hệ hoặc các ma trận trọng số theo quan hệ.")
+
+    st.markdown("#### ⚙️ Kiến trúc")
+    st.markdown("Tại lớp $l+1$:")
+    st.latex(r"\mathbf{h}_i^{(l+1)} = \sigma\!\left( \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_i^r} \frac{1}{c_{i,r}} \, \mathbf{W}_r^{(l)} \, \mathbf{h}_j^{(l)} \, + \, \mathbf{W}_0^{(l)} \, \mathbf{h}_i^{(l)} \right)")
+
+    st.markdown("Trong đó:")
+    st.markdown("- $\mathcal{N}_i^r$: tập láng giềng của nút $i$ thông qua quan hệ $r$.")
+    st.markdown("- $\mathbf{W}_r^{(l)}$: ma trận biến đổi phụ thuộc quan hệ tại lớp $l$.")
+    st.markdown("- $c_{i,r}$: hằng số chuẩn hoá (ví dụ bậc của nút theo quan hệ $r$).")
+    st.markdown("- $\mathbf{W}_0^{(l)}$: biến đổi self‑loop cho nút $i$.")
+    st.markdown("- $\sigma$: phi tuyến (ví dụ ReLU).")
+
+    st.markdown(
+        "Sau một vài lớp, ta thu được nhúng theo ngữ cảnh $\mathbf{h}_i^{(L)}$. Một **decoder** (thường là DistMult) sẽ chấm điểm các cạnh/quan hệ để dự đoán liên kết."
+    )
+
+def DeepLearningModels():
+    st.markdown(
+        """
+        Nhận thấy rằng các phương pháp thuộc hai nhóm còn lại chưa khai thác được thông tin từ các thực thể và quan hệ trong vùng lân cận trên đồ thị, 
+        nhóm phương pháp dựa trên học sâu nhắm đến việc khai thác lượng thông tin dồi dào về cấu trúc và ngữ cảnh từ vòng lân cận của một cặp thực thể để dự đoán quan hệ giữa chúng.
+        """
+    )
+
+    RNN()
+
+    CNN()
+
+    GCN()
+
 def render():
     st.header("Phương pháp dựa trên học máy")
     st.info("**Phương pháp học máy (Machine Learning-based)** sử dụng các thuật toán học máy nhằm học được bộ nhúng đồ thị tối ưu chứa đựng biểu diễn của các thực thể và quan hệ trong đồ thị dưới dạng mã hoá và dùng chúng để dự đoán các thành phần còn thiếu.")
@@ -214,3 +330,5 @@ def render():
         GeoTranslationalsModels()
     with st.expander("Nhóm phương pháp dựa trên tương thích nhúng (Semantic Matching)"):
         SemanticMatchingModels()
+    with st.expander("Nhóm phương pháp dựa trên học sâu (Deep Learning-based)"):
+        DeepLearningModels()
