@@ -29,7 +29,7 @@ def TransR():
     st.divider()
     st.markdown(
         """
-        [**TransR**](https://www.ijcai.org/Proceedings/15/Papers/534.pdf) tiếp tục cải tiến ý tưởng của TransH bằng cách biểu diễn thực thể và quan hệ trong các không gian đa chiều riêng biệt. Mỗi quan hệ được gán một ma trận chuyển đổi để chiếu các thực thể từ không gian chung sang không gian đặc trưng của quan hệ đó trước khi áp dụng phép tịnh tiến.
+        [**TransR**](https://ojs.aaai.org/index.php/AAAI/article/view/9491/9350) tiếp tục cải tiến ý tưởng của TransH bằng cách biểu diễn thực thể và quan hệ trong các không gian đa chiều riêng biệt. Mỗi quan hệ được gán một ma trận chuyển đổi để chiếu các thực thể từ không gian chung sang không gian đặc trưng của quan hệ đó trước khi áp dụng phép tịnh tiến.
         """
     )
     st.latex(r"f_r(h, t) = {||\mathbf{M}_r \mathbf{h} + \mathbf{r} - \mathbf{M}_r \mathbf{t}||}^2_2")
@@ -46,7 +46,7 @@ def TransD():
     st.divider()
     st.markdown(
         """
-        [**TransD**](https://www.ijcai.org/Proceedings/16/Papers/534.pdf) tiếp tục cải tiến mô hình bằng cách sử dụng các vector đặc trưng riêng biệt cho cả thực thể và quan hệ để xây dựng ma trận chuyển đổi động. Điều này giúp giảm số lượng tham số cần học và tăng khả năng biểu diễn của mô hình.
+        [**TransD**](https://aclanthology.org/P15-1067.pdf) tiếp tục cải tiến mô hình bằng cách sử dụng các vector đặc trưng riêng biệt cho cả thực thể và quan hệ để xây dựng ma trận chuyển đổi động. Điều này giúp giảm số lượng tham số cần học và tăng khả năng biểu diễn của mô hình.
         """
     )
     st.markdown("Mỗi thành phần (thực thể hoặc quan hệ) trong đồ thị được cấu thành bởi một cặp vector, một vector để mã hoá ý nghĩa của thành phần đó, và một vector đặc trưng để xây dựng ma trận chuyển đổi.")
@@ -99,7 +99,7 @@ def Rescal():
     st.divider()
     st.markdown(
         r"""
-        [**RESCAL**](https://www.cs.utexas.edu/~ai-lab/pubs/2011/nikolentzos-etal-2011-rescal.pdf) là một trong những mô hình tương thích nhúng đầu tiên được đề xuất. Mỗi quan hệ được biểu diễn bằng một ma trận, và hàm tính điểm của bộ ba (h, r, t) được định nghĩa là tích vô hướng giữa vector thực thể h, ma trận quan hệ r và vector thực thể t.
+        [**RESCAL**](http://www.cip.ifi.lmu.de/~nickel/data/slides-icml2011.pdf) là một trong những mô hình tương thích nhúng đầu tiên được đề xuất. Mỗi quan hệ được biểu diễn bằng một ma trận, và hàm tính điểm của bộ ba (h, r, t) được định nghĩa là tích vô hướng giữa vector thực thể h, ma trận quan hệ r và vector thực thể t.
         Mô hình này hoạt động dựa trên 2 ma trận nhúng:
         - $$\mathbf{A} \in \mathbb{R}^{n \times d}$$: ma trận nhúng của tập thực thể thuộc đồ thị với d là kích thước của chiều ẩn (latent dimension).
         - $$\mathbf{R} \in \mathbb{R}^{m \times d \times d}$$: ma trận nhúng của quan hệ thứ k trong đồ thị.
@@ -119,7 +119,7 @@ def DisMult():
     st.divider()
     st.markdown(
         r"""
-        [**DistMult**](https://arxiv.org/abs/1412.6575) đơn giản hoá RESCAL bằng cách giả định rằng ma trận quan hệ là ma trận chéo. Điều này làm giảm số lượng tham số cần học và tăng hiệu quả tính toán, nhưng giới hạn khả năng biểu diễn các quan hệ không đối xứng.
+        [**DistMult**](https://arxiv.org/pdf/1412.6575) đơn giản hoá RESCAL bằng cách giả định rằng ma trận quan hệ là ma trận chéo. Điều này làm giảm số lượng tham số cần học và tăng hiệu quả tính toán, nhưng giới hạn khả năng biểu diễn các quan hệ không đối xứng.
         Ma trận thực thể và quan hệ của DistMult có dạng
         - $$ \mathbf{A} \in \mathbb{R}^{n \times d} $$: ma trận nhúng của tập thực thể thuộc đồ thị với d là kích thước của chiều ẩn (latent dimension).
         - $$ \mathbf{R} \in \mathbb{R}^{m \times d} $$: ma trận nhúng quan hệ của tập quan hệ thuộc đồ thị.
@@ -144,7 +144,7 @@ def ComPlex():
     st.divider()
     st.markdown(
         r"""
-        [**ComplEx**](https://proceedings.neurips.cc/paper/2016/hash/dc6a7e655d7f3f3a4de4a8b4a6b9c8f9-Abstract.html) mở rộng DistMult bằng cách đưa biểu diễn của thực thể và quan hệ vào không gian phức.
+        [**ComplEx**](http://proceedings.mlr.press/v48/trouillon16.pdf) mở rộng DistMult bằng cách đưa biểu diễn của thực thể và quan hệ vào không gian phức.
         Điều này cho phép mô hình biểu diễn các quan hệ không đối xứng, nhưng vẫn giữ được tính đơn giản và hiệu quả tính toán mà DisMult mang lại.
         Ma trận thực thể và quan hệ của ComplEx có dạng
         - $$ \mathbf{A} \in \mathbb{C}^{n \times d} $$: ma trận nhúng của tập thực thể thuộc đồ thị với d là kích thước của chiều ẩn (latent dimension).
@@ -208,11 +208,9 @@ def SemanticMatchingModels():
 
 def RNN():
     st.divider()
-    st.markdown("### 1. Mô hình dựa trên RNN (RNN‑Based Models)")
     st.markdown(
-        """
-        🧠 **Ý tưởng cốt lõi**  
-        Khác với các mô hình tịnh tiến hay song tuyến tính chỉ hoạt động trong phạm vi một bộ ba, các mô hình dựa trên RNN suy luận **theo đường đi (path)** trong KG — tức là chuỗi các quan hệ nối hai thực thể.  
+        """ 
+        [Các mô hình dựa vào mạng neuron hồi quy (RNN)](https://proceedings.neurips.cc/paper_files/paper/2017/file/0e55666a4ad822e0e34299df3591d979-Paper.pdf) khác với các mô hình tịnh tiến hay song tuyến tính chỉ hoạt động trong phạm vi một bộ ba, các mô hình dựa trên RNN suy luận **theo đường đi (path)** trong KG — tức là chuỗi các quan hệ nối hai thực thể.  
         Một đường đi như:
         """
     )
@@ -224,16 +222,16 @@ def RNN():
         """
     )
 
-    st.markdown("#### 📩 Input")
+    st.markdown("Input của một mô hình RNN cho suy luận theo đường đi bao gồm:")
     st.markdown(
         """
         - Một chuỗi các quan hệ $[r_1, r_2, \ldots, r_n]$ tạo thành đường đi giữa hai thực thể.  
-        - Tuỳ chọn: thêm nhúng của thực thể đầu/cuối.  
+        - Nhúng của thực thể đầu/cuối.  
         - Mỗi quan hệ có một vector nhúng và được đưa vào RNN theo từng bước thời gian.
         """
     )
 
-    st.markdown("#### ⚙️ Kiến trúc")
+    st.markdown("Như một mạng RNN thông thường xử lý chuỗi thời gian, ta có:")
     st.markdown("1. RNN cập nhật trạng thái ẩn biểu diễn thành phần quan hệ đã đi qua:")
     st.latex(r"\mathbf{h}_t = \text{RNN}(\mathbf{r}_t, \mathbf{h}_{t-1})")
     st.markdown("2. Trạng thái ẩn cuối $\mathbf{h}_n$ mã hoá **ngữ nghĩa đường đi** (path meaning).")
@@ -241,34 +239,22 @@ def RNN():
     st.latex(r"s(h, r_q, t) = \langle \mathbf{h}_n,\ \mathbf{r}_q \rangle")
     st.markdown("(có thể đưa qua $\sigma$ hoặc softmax để suy ra xác suất).")
 
-    with st.expander("Ví dụ minh hoạ nhanh"):
-        st.markdown(
-            "- Đường đi: $h$ —born\_in→ $e_1$ —located\_in→ $t$.  ")
-        st.markdown(
-            "- RNN đọc lần lượt $(r_1=\text{born\_in}), (r_2=\text{located\_in})$ để thu được $\mathbf{h}_2$.  ")
-        st.markdown(
-            "- So khớp $\langle \mathbf{h}_2, \mathbf{r}_{q=\text{citizen\_of}} \rangle$ để dự đoán quan hệ mục tiêu giữa $(h, t)$.  "
-        )
-
 def CNN():
     st.divider()
-    st.markdown("### 2. ConvE (Convolutional Embeddings for Link Prediction)")
     st.markdown(
         """
-        🧠 **Ý tưởng cốt lõi**  
-        [ConvE](https://arxiv.org/abs/1707.01476) (Dettmers et al., 2018) đưa **tích chập 2D** vào để mô hình hoá các tương tác phức tạp giữa nhúng thực thể và quan hệ.  
+        [ConvE (Convolutional Embeddings for Link Prediction)](https://ojs.aaai.org/index.php/AAAI/article/download/11573/11432) đưa **tích chập 2D** vào để mô hình hoá các tương tác phức tạp giữa nhúng thực thể và quan hệ.  
         Thay vì cộng đơn giản (TransE) hay tích song tuyến tính (DistMult), ConvE **biến đổi nhúng thành ma trận 2D** và áp dụng các bộ lọc tích chập để trích xuất các mẫu đặc trưng cục bộ (local feature patterns).
         """
     )
 
-    st.markdown("#### 📩 Input")
-    st.markdown("A triple $(h, r, t)$:")
+    st.markdown("Một bộ ba $(h, r, t)$:")
     st.markdown("- Nhúng $\mathbf{h},\ \mathbf{r} \in \mathbb{R}^d$")
-    st.markdown("- Reshape mỗi vector thành lưới 2D (ví dụ $\mathbf{h} \in \mathbb{R}^{m\times n}$)")
+    st.markdown(r"- Reshape mỗi vector thành lưới 2D (ví dụ $\mathbf{h} \in \mathbb{R}^{m \times n}$)")
     st.markdown("- Nối theo chiều hàng để tạo thành một \"ảnh\" 2D:")
     st.latex(r"\text{input} = [\text{reshape}(\mathbf{h});\ \text{reshape}(\mathbf{r})]")
 
-    st.markdown("#### ⚙️ Kiến trúc")
+    st.markdown("ConvE xem bộ nhúng của thực thể và quan hệ như một \"ảnh\" 2D, áp dụng các bộ lọc tích chập để học các đặc trưng cục bộ, sau đó sử dụng một lớp fully-connected để kết hợp các đặc trưng này thành một biểu diễn ngữ cảnh.")
     st.markdown("1. Áp dụng **tích chập 2D** với các bộ lọc học được:")
     st.latex(r"\mathbf{f} = \text{Conv2D}([\mathbf{h};\ \mathbf{r}])")
     st.markdown("2. Làm phẳng và chiếu qua một lớp fully-connected (kèm ReLU + Dropout):")
