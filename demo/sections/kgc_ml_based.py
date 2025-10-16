@@ -210,7 +210,7 @@ def RNN():
     st.divider()
     st.markdown(
         """ 
-        [Các mô hình dựa vào mạng neuron hồi quy (RNN)](https://proceedings.neurips.cc/paper_files/paper/2017/file/0e55666a4ad822e0e34299df3591d979-Paper.pdf) khác với các mô hình tịnh tiến hay song tuyến tính chỉ hoạt động trong phạm vi một bộ ba, các mô hình dựa trên RNN suy luận **theo đường đi (path)** trong KG — tức là chuỗi các quan hệ nối hai thực thể.  
+        [**Các mô hình dựa vào mạng neuron hồi quy (RNN)**](https://proceedings.neurips.cc/paper_files/paper/2017/file/0e55666a4ad822e0e34299df3591d979-Paper.pdf) khác với các mô hình tịnh tiến hay song tuyến tính chỉ hoạt động trong phạm vi một bộ ba, các mô hình dựa trên RNN suy luận **theo đường đi (path)** trong KG — tức là chuỗi các quan hệ nối hai thực thể.  
         Một đường đi như:
         """
     )
@@ -222,28 +222,32 @@ def RNN():
         """
     )
 
-    st.markdown("Input của một mô hình RNN cho suy luận theo đường đi bao gồm:")
+    st.markdown(r"RNN xét một đường đi (path) giữ hai thực thể $$\mathbf{h}$$ và $$\mathbf{t}$$")
+    st.latex(r"(r_1, r_2, \ldots, r_L)")
+    
+    st.markdown(r"Với trạng thái ẩn ở bước số 0 là nhúng của thực thể $$\mathbf{h}$$, RNN cập nhật trạng thái ẩn này với mỗi quan hệ trong đường đi tới $$\mathbf{t}$$:")
+    st.latex(r"\mathbf{h}_0 = \mathbf{h}")
+    st.latex(r"\mathbf{h}_i = f_{RNN}(\mathbf{h}_{i-1}, \mathbf{r}_i), \quad i=1,2,\ldots,L")
+    st.latex(r"f_{RNN} = \sigma(\mathbf{W}_{rh}\mathbf{r}_t + \mathbf{W}_{hh}\mathbf{h}_{t-1} + \mathbf{b}_h)")
     st.markdown(
         """
-        - Một chuỗi các quan hệ $[r_1, r_2, \ldots, r_n]$ tạo thành đường đi giữa hai thực thể.  
-        - Nhúng của thực thể đầu/cuối.  
-        - Mỗi quan hệ có một vector nhúng và được đưa vào RNN theo từng bước thời gian.
+        Trong đó
+        - $$W_{rh}$$ là ma trận trọng số kết nối giữa đầu vào quan hệ và trạng thái ẩn
+        - $$W_{hh}$$ là ma trận trọng số kết nối giữa trạng thái ẩn trước đó và trạng thái ẩn hiện tại
+        - $$b_h$$ là vector bias cho trạng thái ẩn
+        - $$\sigma$$ là hàm kích hoạt phi tuyến (ví dụ ReLU hoặc tanh)
         """
     )
+    st.caption("Vì RNN có thể gặp vấn đề tiêu biến thông tin (vanishing gradient) với các đường đi dài, các biến thể như LSTM hoặc GRU thường được sử dụng để cải thiện khả năng học các phụ thuộc xa (long-range dependencies).")
 
-    st.markdown("Như một mạng RNN thông thường xử lý chuỗi thời gian, ta có:")
-    st.markdown("1. RNN cập nhật trạng thái ẩn biểu diễn thành phần quan hệ đã đi qua:")
-    st.latex(r"\mathbf{h}_t = \text{RNN}(\mathbf{r}_t, \mathbf{h}_{t-1})")
-    st.markdown("2. Trạng thái ẩn cuối $\mathbf{h}_n$ mã hoá **ngữ nghĩa đường đi** (path meaning).")
-    st.markdown("3. Mô hình chấm điểm độ tương thích giữa biểu diễn đường đi và quan hệ đích (query relation), ví dụ bằng tích vô hướng:")
-    st.latex(r"s(h, r_q, t) = \langle \mathbf{h}_n,\ \mathbf{r}_q \rangle")
-    st.markdown("(có thể đưa qua $\sigma$ hoặc softmax để suy ra xác suất).")
+    st.markdown("Sau khi xử lý toàn bộ đường đi, trạng thái ẩn cuối cùng $$\mathbf{h}_L$$ sẽ được sử dụng để dự đoán quan hệ giữa $$\mathbf{h}$$ và $$\mathbf{t}$$:")
+    st.latex(r"\hat{r} = \underset{r}{\arg \max} \ \text{sim}(\mathbf{h}_L, \mathbf{r})")
 
 def CNN():
     st.divider()
     st.markdown(
         """
-        [ConvE (Convolutional Embeddings for Link Prediction)](https://ojs.aaai.org/index.php/AAAI/article/download/11573/11432) đưa **tích chập 2D** vào để mô hình hoá các tương tác phức tạp giữa nhúng thực thể và quan hệ.  
+        [**ConvE (Convolutional Embeddings for Link Prediction)**](https://ojs.aaai.org/index.php/AAAI/article/download/11573/11432) đưa **tích chập 2D** vào để mô hình hoá các tương tác phức tạp giữa nhúng thực thể và quan hệ.  
         Thay vì cộng đơn giản (TransE) hay tích song tuyến tính (DistMult), ConvE **biến đổi nhúng thành ma trận 2D** và áp dụng các bộ lọc tích chập để trích xuất các mẫu đặc trưng cục bộ (local feature patterns).
         """
     )
@@ -266,7 +270,7 @@ def GCN():
     st.divider()
     st.markdown(
         """
-        [R‑GCN](https://arxiv.org/pdf/1703.06103) mở rộng GCN cho **đồ thị tri thức**.  
+        [**R‑GCN (Relational Graph Convolutional Networks)**](https://arxiv.org/pdf/1703.06103) mở rộng GCN cho **đồ thị tri thức**.  
         Nhúng của mỗi thực thể được cập nhật bằng cách **tổng hợp thông tin từ vùng lân cận**, nhưng **mỗi loại quan hệ có một ma trận biến đổi riêng**.  
         Mỗi nút nhận thông điệp từ láng giềng theo các biến đổi phụ thuộc quan hệ sử dụng các ma trận chuyển đổi này.
         """
@@ -302,7 +306,12 @@ def DeepLearningModels():
 
 def render():
     st.header("Phương pháp dựa trên học máy")
-    st.info("**Phương pháp học máy (Machine Learning-based)** sử dụng các thuật toán học máy nhằm học được bộ nhúng đồ thị tối ưu chứa đựng biểu diễn của các thực thể và quan hệ trong đồ thị dưới dạng mã hoá và dùng chúng để dự đoán các thành phần còn thiếu.")
+    st.info("""
+        **Phương pháp học máy (Machine Learning-based)** sử dụng các thuật toán học máy nhằm học được bộ nhúng 
+        đồ thị tối ưu chứa đựng biểu diễn của các thực thể và quan hệ trong đồ thị dưới dạng mã hoá và dùng chúng để dự đoán các thành phần còn thiếu. 
+        Trong quá trình huấn luyện, các mô hình này tối ưu hoá bộ nhúng của thực thể và quan hệ dựa trên một hàm tính điểm bộ ba (h,r,t) 
+        sao cho các bộ ba đúng có điểm số cao hơn các bộ ba sai.
+    """)
     
     with st.expander("Nhóm phương pháp dựa trên tịnh tiến (Translational) vector trong không gian đa chiều"):
         GeoTranslationalsModels()
