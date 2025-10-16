@@ -241,30 +241,37 @@ def RNN():
     st.caption("Vì RNN có thể gặp vấn đề tiêu biến thông tin (vanishing gradient) với các đường đi dài, các biến thể như LSTM hoặc GRU thường được sử dụng để cải thiện khả năng học các phụ thuộc xa (long-range dependencies).")
 
     st.markdown("Sau khi xử lý toàn bộ đường đi, trạng thái ẩn cuối cùng $$\mathbf{h}_L$$ sẽ được sử dụng để dự đoán quan hệ giữa $$\mathbf{h}$$ và $$\mathbf{t}$$:")
-    st.latex(r"\hat{r} = \underset{r}{\arg \max} \ \text{sim}(\mathbf{h}_L, \mathbf{r})")
+    st.latex(r"f_r(h, t) = \underset{r}{\arg \max} \ \text{sim}(\mathbf{h}_L, \mathbf{r})")
+    st.caption(r"Trong đó $$\text{sim}$$ là hàm đo độ tương đồng giữa hai vector.")
 
 def CNN():
     st.divider()
     st.markdown(
         """
-        [**ConvE (Convolutional Embeddings for Link Prediction)**](https://ojs.aaai.org/index.php/AAAI/article/download/11573/11432) đưa **tích chập 2D** vào để mô hình hoá các tương tác phức tạp giữa nhúng thực thể và quan hệ.  
-        Thay vì cộng đơn giản (TransE) hay tích song tuyến tính (DistMult), ConvE **biến đổi nhúng thành ma trận 2D** và áp dụng các bộ lọc tích chập để trích xuất các mẫu đặc trưng cục bộ (local feature patterns).
+        [**ConvE (Convolutional Embeddings for Link Prediction)**](https://ojs.aaai.org/index.php/AAAI/article/download/11573/11432) vận dụng mạng neuron tích chập (CNN), thường được sử dụng trong xử lý ảnh, vào tác vụ dự đoán liên kết trong đồ thị tri thức.
+        Thay vì tịnh tiến (TransE) hay tích song tuyến tính (DistMult), ConvE **biến đổi nhúng thành ma trận 2D** và áp dụng các bộ lọc tích chập để trích xuất các mẫu đặc trưng cục bộ (local feature patterns) trong vùng lận cận của thực thể thuộc đồ thị.
         """
     )
 
-    st.markdown("Một bộ ba $(h, r, t)$:")
-    st.markdown("- Nhúng $\mathbf{h},\ \mathbf{r} \in \mathbb{R}^d$")
-    st.markdown(r"- Reshape mỗi vector thành lưới 2D (ví dụ $\mathbf{h} \in \mathbb{R}^{m \times n}$)")
-    st.markdown("- Nối theo chiều hàng để tạo thành một \"ảnh\" 2D:")
-    st.latex(r"\text{input} = [\text{reshape}(\mathbf{h});\ \text{reshape}(\mathbf{r})]")
+    st.markdown(r"Bắt đầu với nhúng của chủ thể $$\mathbf{h} \in \mathbb{R}^{d}$$ và quan hệ $$\mathbf{r} \in \mathbb{R}^{d}$$, CNN thực hiện nối vector và biến đổi vector thành ma trận 2D:")
+    st.latex(r"\mathbf{h}, \mathbf{r} \in \mathbb{R}^{d}")
+    st.latex(r"\mathbf{x} = [\mathbf{h};\mathbf{r}] \in \mathbb{R}^{2d}")
 
-    st.markdown("ConvE xem bộ nhúng của thực thể và quan hệ như một \"ảnh\" 2D, áp dụng các bộ lọc tích chập để học các đặc trưng cục bộ, sau đó sử dụng một lớp fully-connected để kết hợp các đặc trưng này thành một biểu diễn ngữ cảnh.")
-    st.markdown("1. Áp dụng **tích chập 2D** với các bộ lọc học được:")
-    st.latex(r"\mathbf{f} = \text{Conv2D}([\mathbf{h};\ \mathbf{r}])")
-    st.markdown("2. Làm phẳng và chiếu qua một lớp fully-connected (kèm ReLU + Dropout):")
-    st.latex(r"\mathbf{z} = \text{Dropout}(\text{ReLU}(\text{Flatten}(\mathbf{f})\, \mathbf{W}))")
-    st.markdown("3. Tính **điểm** với nhúng của thực thể đích $\mathbf{t}$:")
-    st.latex(r"\varphi(h,r,t) = \sigma(\mathbf{z}^{\top} \mathbf{t})")
+    st.markdown(r"""
+        ConvE định nghĩa hai tham số $$\mathbf{m}$$ và $$\mathbf{n}$$ sao cho $$\mathbf{m} \times \mathbf{n} = 2d$$, và định nghĩa một hàm $$\text{reshape(x)}$$ biến đổi vector $$\mathbf{x}$$ thành ma trận 2D:
+    """)
+    st.latex(r"\mathbf{X} = \text{reshape}(\mathbf{x}) \in \mathbb{R}^{m \times n}")
+    st.caption("Ví dụ, nếu kích thước nhúng $$d=200$$, ta có thể chọn $$m=20$$ và $$n=20$$ để biến đổi vector nhúng thành ma trận 20x20.")
+
+    st.markdown("Sau khi biến đổi, ConvE áp dụng các lớp tích chập (convolutional layers) để trích xuất các đặc trưng cục bộ từ ma trận 2D này:")
+    st.latex(r"\mathbf{Y} = \text{Conv2D}(\mathbf{X})")
+    st.markdown("""
+        Kết quả của phép tích chập là một tập hợp các bản đồ đặc trưng (feature maps) biểu diễn các mẫu đặc trưng cục bộ trong vùng lân cận của thực thể và quan hệ.
+    """)
+
+    st.markdown("Hàm tính điểm của 1 bộ ba cũng là xác suất bộ ba đó tồn tại trong đồ thị:")
+    st.latex(r"f_r(h, t) = \sigma(vec(\mathbf{Y})\mathbf{W})^\top \mathbf{t}")
+    st.caption(r"Trong đó $$\mathbf{W}$$ là ma trận ánh xạ để đưa vector $$vec(\mathbf{Y})$$ về không gian nhúng của thực thể, và $$\sigma$$ là hàm kích hoạt phi tuyến (ví dụ ReLU).")
 
 def GCN():
     st.divider()
