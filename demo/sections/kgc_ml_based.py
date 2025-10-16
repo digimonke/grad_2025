@@ -277,25 +277,34 @@ def GCN():
     st.divider()
     st.markdown(
         """
-        [**R‑GCN (Relational Graph Convolutional Networks)**](https://arxiv.org/pdf/1703.06103) mở rộng GCN cho **đồ thị tri thức**.  
-        Nhúng của mỗi thực thể được cập nhật bằng cách **tổng hợp thông tin từ vùng lân cận**, nhưng **mỗi loại quan hệ có một ma trận biến đổi riêng**.  
+        [**R‑GCN (Relational Graph Convolutional Networks)**](https://arxiv.org/pdf/1703.06103) áp dụng kiến trúc GCN vào **đồ thị tri thức** nhằm giải quyết bài toán dự đoán dữ liệu đa quan hệ. 
+        Nhúng của mỗi thực thể được cập nhật bằng cách tổng hợp thông tin từ vùng lân cận, mỗi loại quan hệ có một ma trận biến đổi (transformation matrix) riêng.  
         Mỗi nút nhận thông điệp từ láng giềng theo các biến đổi phụ thuộc quan hệ sử dụng các ma trận chuyển đổi này.
         """
     )
 
-    st.markdown("Tại lớp $l+1$:")
-    st.latex(r"\mathbf{h}_i^{(l+1)} = \sigma\!\left( \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_i^r} \frac{1}{c_{i,r}} \, \mathbf{W}_r^{(l)} \, \mathbf{h}_j^{(l)} \, + \, \mathbf{W}_0^{(l)} \, \mathbf{h}_i^{(l)} \right)")
+    st.markdown(r"""
+        Với mô hình [GCN](https://bibbase.org/service/mendeley/bfbbf840-4c42-3914-a463-19024f50b30c/file/25dbdd06-4704-a33f-23d9-c626b08adc1e/160902907.pdf.pdf) nguyên bản,
+        nhúng của các thực thể là một tổng hợp thông tin từ vùng lân cận của nó với các quan hệ có giá trị tổng hợp như nhau.
+    """)
+    st.latex(r"\mathbf{h}_i^{(l+1)} = \sigma\!\left( \sum_{j \in \mathcal{N}_i} \mathbf{W}^{(l)} \mathbf{h}_j^{(l)}\right)")
+    st.caption("Tuy nhiên, đồ thị tri thức có nhiều loại quan hệ khác nhau, và mỗi loại quan hệ có thể mang thông tin khác nhau. R-GCN mở rộng GCN bằng cách sử dụng các ma trận biến đổi phụ thuộc quan hệ để xử lý đa dạng các loại quan hệ trong đồ thị tri thức.")
 
-    st.markdown("Trong đó:")
-    st.markdown("- $\mathcal{N}_i^r$: tập láng giềng của nút $i$ thông qua quan hệ $r$.")
-    st.markdown("- $\mathbf{W}_r^{(l)}$: ma trận biến đổi phụ thuộc quan hệ tại lớp $l$.")
-    st.markdown("- $c_{i,r}$: hằng số chuẩn hoá.")
-    st.markdown("- $\mathbf{W}_0^{(l)}$: biến đổi self‑loop cho nút $i$.")
-    st.markdown("- $\sigma$: phi tuyến (ví dụ ReLU).")
+    st.markdown(r"""
+        R-GCN cải tiến GCN bằng cách sử dụng các ma trận biến đổi phụ thuộc quan hệ để xử lý đa dạng các loại quan hệ trong đồ thị tri thức.
+    """)
+    st.latex(r"h_i^{(l+1)} = \sigma \left( \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_i^r} \frac{1}{c_{i,r}} W_r^{(l)} h_j^{(l)} + W_0^{(l)} h_i^{(l)} \right)")
+    st.markdown(r"""
+        Trong đó:
+        - $$\mathcal{R}$$ là tập hợp các loại quan hệ trong đồ thị.
+        - $$\mathcal{N}_i^r$$ là tập hợp các nút láng giềng của nút $$i$$ kết nối với nó qua quan hệ $$r$$.
+        - $$c_{i,r}$$ là hệ số chuẩn hoá, thường là số lượng nút láng giềng của nút $$i$$ qua quan hệ $$r$$.
+        - $$W_r^{(l)}$$ là ma trận biến đổi phụ thuộc quan hệ cho quan hệ $$r$$ ở lớp $$l$$.
+        - $$W_0^{(l)}$$ là ma trận biến đổi cho nút $$i$$ để giữ thông tin của chính nó.
+        - $$\sigma$$ là hàm kích hoạt phi tuyến (ví dụ ReLU).
+    """)
 
-    st.markdown(
-        "Sau một vài lớp, ta thu được nhúng theo ngữ cảnh $\mathbf{h}_i^{(L)}$. Một **decoder** (thường là DistMult) sẽ chấm điểm các cạnh/quan hệ để dự đoán liên kết."
-    )
+    st.markdown(r"""R-GCN thường được huấn luyện chung với một module dự đoán liên kết (link prediction module) như DistMult hoặc ComPlex để dự đoán các bộ ba (h,r,t) trong đồ thị tri thức.""")
 
 def DeepLearningModels():
     st.markdown(
