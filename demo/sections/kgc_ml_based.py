@@ -264,29 +264,21 @@ def CNN():
 
 def GCN():
     st.divider()
-    st.markdown("### 3. Relational Graph Convolutional Network (R‑GCN)")
     st.markdown(
         """
-        🧠 **Ý tưởng cốt lõi**  
-        [R‑GCN](https://arxiv.org/abs/1703.06103) mở rộng GCN cho **đồ thị đa quan hệ**.  
-        Nhúng của mỗi thực thể được cập nhật bằng cách **tổng hợp thông tin từ láng giềng**, nhưng **mỗi loại quan hệ có một ma trận biến đổi riêng**.  
-        Chính thức, mỗi nút nhận thông điệp từ láng giềng theo các biến đổi phụ thuộc quan hệ.
+        [R‑GCN](https://arxiv.org/pdf/1703.06103) mở rộng GCN cho **đồ thị tri thức**.  
+        Nhúng của mỗi thực thể được cập nhật bằng cách **tổng hợp thông tin từ vùng lân cận**, nhưng **mỗi loại quan hệ có một ma trận biến đổi riêng**.  
+        Mỗi nút nhận thông điệp từ láng giềng theo các biến đổi phụ thuộc quan hệ sử dụng các ma trận chuyển đổi này.
         """
     )
 
-    st.markdown("#### 📩 Input")
-    st.markdown("- Đồ thị $\mathcal{G} = (V, E)$ với các thực thể $V$ và cạnh $(h, r, t) \in E$.")
-    st.markdown("- Nhúng khởi tạo của thực thể $\mathbf{h}_i^{(0)}$.")
-    st.markdown("- Nhúng loại quan hệ hoặc các ma trận trọng số theo quan hệ.")
-
-    st.markdown("#### ⚙️ Kiến trúc")
     st.markdown("Tại lớp $l+1$:")
     st.latex(r"\mathbf{h}_i^{(l+1)} = \sigma\!\left( \sum_{r \in \mathcal{R}} \sum_{j \in \mathcal{N}_i^r} \frac{1}{c_{i,r}} \, \mathbf{W}_r^{(l)} \, \mathbf{h}_j^{(l)} \, + \, \mathbf{W}_0^{(l)} \, \mathbf{h}_i^{(l)} \right)")
 
     st.markdown("Trong đó:")
     st.markdown("- $\mathcal{N}_i^r$: tập láng giềng của nút $i$ thông qua quan hệ $r$.")
     st.markdown("- $\mathbf{W}_r^{(l)}$: ma trận biến đổi phụ thuộc quan hệ tại lớp $l$.")
-    st.markdown("- $c_{i,r}$: hằng số chuẩn hoá (ví dụ bậc của nút theo quan hệ $r$).")
+    st.markdown("- $c_{i,r}$: hằng số chuẩn hoá.")
     st.markdown("- $\mathbf{W}_0^{(l)}$: biến đổi self‑loop cho nút $i$.")
     st.markdown("- $\sigma$: phi tuyến (ví dụ ReLU).")
 
