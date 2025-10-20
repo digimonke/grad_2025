@@ -31,12 +31,15 @@ def normalize_data(df):
 
     return df
 
-def draw_graph(cg: CausalGraph, labels, algo_name):
+def draw_graph(cg: CausalGraph, labels, algo_name, width_px: int | None = None):
     g = cg.G if algo_name == "PC" else cg['G']
     try:
         pyd = GraphUtils.to_pydot(g, labels=labels)
         png_bytes = pyd.create_png()   # returns PNG bytes
-        st.image(png_bytes, caption="Causal graph (pydot)", use_container_width=True)
+        if width_px is not None:
+            st.image(png_bytes, caption="Causal graph (pydot)", width=width_px)
+        else:
+            st.image(png_bytes, caption="Causal graph (pydot)", use_container_width=True)
     except Exception as e:
         # Fallback: draw with NetworkX
         st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
@@ -54,9 +57,17 @@ def draw_graph(cg: CausalGraph, labels, algo_name):
         except Exception:
             pass
         pos = nx.spring_layout(H, seed=0)
-        plt.figure(figsize=(6, 4))
+        fig = plt.figure(figsize=(6, 4))
         nx.draw(H, pos, with_labels=True, node_color="#87cefa", node_size=1200, arrows=True)
-        st.pyplot(plt.gcf(), clear_figure=True, use_container_width=True)
+        from io import BytesIO
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+        plt.close(fig)
+        img = buf.getvalue()
+        if width_px is not None:
+            st.image(img, caption="Causal graph (NetworkX)", width=width_px)
+        else:
+            st.image(img, caption="Causal graph (NetworkX)", use_container_width=True)
 
 
 # ----------------------------
@@ -101,15 +112,26 @@ def sample_from_true_bn(n_samples: int = 1000, seed: int | None = 0) -> pd.DataF
     return df
 
 
-def draw_true_bn_graph(G: nx.DiGraph):
+def draw_true_bn_graph(G: nx.DiGraph, width_px: int | None = None):
     """Render the ground-truth DAG using pydot and display in Streamlit."""
     try:
         pyd = to_pydot(G)
         png_bytes = pyd.create_png()
-        st.image(png_bytes, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
+        if width_px is not None:
+            st.image(png_bytes, caption="Ground-truth DAG (5-node BN)", width=width_px)
+        else:
+            st.image(png_bytes, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
     except Exception as e:
         st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
         pos = nx.spring_layout(G, seed=0)
-        plt.figure(figsize=(6, 4))
+        fig = plt.figure(figsize=(6, 4))
         nx.draw(G, pos, with_labels=True, node_color="#ffcc00", node_size=1200, arrows=True)
-        st.pyplot(plt.gcf(), clear_figure=True, use_container_width=True)
+        from io import BytesIO
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+        plt.close(fig)
+        img = buf.getvalue()
+        if width_px is not None:
+            st.image(img, caption="Ground-truth DAG (5-node BN)", width=width_px)
+        else:
+            st.image(img, caption="Ground-truth DAG (5-node BN)", use_container_width=True)

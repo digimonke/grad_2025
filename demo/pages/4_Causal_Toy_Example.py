@@ -21,8 +21,6 @@ with st.sidebar:
     algo = st.selectbox("Thuật toán", ["PC", "GES"], index=0)
     run = st.button("Chạy")
 
-col_true, col_learned = st.columns(2)
-
 if run:
     # 1) Tạo dữ liệu từ BN thật
     G_true = utils.get_true_bn()
@@ -37,14 +35,18 @@ if run:
 
     labels = list(df.columns)
 
-    with col_true:
+    # Hàng 1: Đồ thị thật (trái) và bảng dữ liệu (phải)
+    left, right = st.columns(2)
+    with left:
         st.subheader("Đồ thị thật")
-        utils.draw_true_bn_graph(G_true)
+        utils.draw_true_bn_graph(G_true, width_px=250)
+    with right:
+        st.subheader("Dữ liệu (5 dòng đầu)")
         st.dataframe(df.head(), use_container_width=True)
 
-    with col_learned:
-        st.subheader("Đồ thị học được")
-        utils.draw_graph(cg, labels=labels, algo_name=algo)
+    # Hàng 2: Đồ thị học được (bên dưới)
+    st.subheader("Đồ thị học được")
+    utils.draw_graph(cg, labels=labels, algo_name=algo, width_px=250)
 
 else:
     st.info("Chọn tham số ở thanh bên và bấm 'Chạy' để tạo dữ liệu và học đồ thị.")
