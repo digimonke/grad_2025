@@ -32,9 +32,9 @@ st.markdown(
     Tập mệnh đề này sẽ được sử dụng để kiểm tra tính tương thích của các cấu trúc mạng nhân quả với dữ liệu quan sát.
     """
 )
-st.latex(r"\mathcal{I}_{\mathbb{P}_X} = \{(X_i \perp\!\!\!\perp X_j \mid C) \mid X_i, X_j \in \mathbf{X}, C \subseteq \mathbf{X} \setminus \{X_i, X_j\}\}")
+st.latex(r"\mathcal{I}({\mathbb{P}_X}) = \{(X_i \perp\!\!\!\perp X_j \mid C) \mid X_i, X_j \in \mathbf{X}, C \subseteq \mathbf{X} \setminus \{X_i, X_j\}\}")
 
-st.divider()
+st.header("Mạng quan hệ nhân quả Markov")
 st.markdown(
     r"""
     Một **mạng quan hệ nhân quả Markov** (SCM) là một đồ thị có hướng vô chu trình (Directed Acyclic Graph - DAG) $$\mathcal{G}$$ trong đó các nút đại diện cho các biến ngẫu nhiên
@@ -62,10 +62,32 @@ col1, col2 = st.columns(2)
 with col1:
     st.latex("{\{f_i\}}^p_{i=1}")
 with col2:
-    st.latex(r"X_i = f_i(pa_{\mathcal{G}}(X_i), \epsilon_i)")
+    st.latex(r"X_i = f_i(X_{pa_{\mathcal{G}}(i)}, \epsilon_i)")
 
 st.markdown("Phân phối có điều kiện của một biến nội sinh thuộc SCM có dạng")
-st.latex(r"P(X_i \mid pa_{\mathcal{G}}(X_i)) = \mathbb{E}[\mathbf{1}_{X_i = f_i(X_{\text{pa}_{\mathcal{G}}(i)}, \epsilon_i)} \mid X_{\text{pa}_{\mathcal{G}}(i)}]")
+st.latex(r"P(X_i \mid X_{pa_{\mathcal{G}}(i)}) = \mathbb{E}[\mathbf{1}_{X_i = f_i(X_{\text{pa}_{\mathcal{G}}(i)}, \epsilon_i)} \mid X_{\text{pa}_{\mathcal{G}}(i)}]")
 
 st.markdown("Theo tính chất Markov, phân phối của biến nội sinh được phân tích nhân tử như sau")
 st.latex(r"\mathbb{P}_X(X) = \prod_{i=1}^p \mathbb{P}_X(X_i \mid X_{\text{pa}_{\mathcal{G}}(i)})")
+
+st.subheader("Phân tách có hướng")
+st.markdown(
+    """
+    Một mạng nhân quả Markov tương thích với phân phối của dữ liệu -- và là một I-map của $$\mathbb{P}_X$$ -- nếu tất cả các mệnh đề phân tách có hướng (d-separation) được biểu diễn trong đồ thị là tập con của tập mệnh đề độc lập có điều kiện trong phân phối dữ liệu quan sát.
+    """
+)
+st.latex(r"\mathcal{I}({\mathcal{G}}) \subseteq \mathcal{I}({\mathbb{P}_X})")
+
+st.markdown(r"""
+    Một mệnh đề phân tách có hướng là biểu diễn trực quan của mệnh đề độ lập có điều kiện giữa hai biến trong 
+    dữ liệu trên một đồ thị nhân quả Markov. Dựa trên một loại cấu trúc đặc biệt của đồ thị có hướng là **đối** (collider còn được gọi là immorality hay v-structure)
+    một mệnh đề phân tách có hướng giữa hai nút $$i$$ và $$j$$ được định nghĩa như sau 
+    """
+)
+st.markdown(r"""
+    Xét một đường đi $$\gamma = \langle \gamma_1 = i, \gamma_2, \dots, \gamma_M = j \rangle$$, nút $$\gamma_m$$ trên đường đi này được gọi là **đối** nếu các cạnh trên đường đi hội tụ vào nút $$\gamma_m$$, tức là $$\gamma_{m-1} \rightarrow \gamma_m \leftarrow \gamma_{m+1}$$.
+    Xét tập nút điều kiện $$C \subseteq \mathbf{X} \setminus \{X_i, X_j\}$$. Đường đi $$\gamma$$ chặn quan hệ giữa hai nút $$i$$ và $$j$$ nếu một trong hai điều kiện sau được thoả mãn
+    - Một nút bất kỳ thuộc $$\gamma$$ không phải là đối và thuộc tập điều kiện $$C$$.
+    - Không có nút đối và con cháu của nút đối thuộc tập điều kiện $$C$$.
+    """
+)
