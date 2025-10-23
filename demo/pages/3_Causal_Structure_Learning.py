@@ -71,13 +71,6 @@ st.markdown("Theo tính chất Markov, phân phối của biến nội sinh đư
 st.latex(r"\mathbb{P}_X(X) = \prod_{i=1}^p \mathbb{P}_X(X_i \mid X_{\text{pa}_{\mathcal{G}}(i)})")
 
 st.subheader("Phân tách có hướng")
-st.markdown(
-    """
-    Một mạng nhân quả Markov tương thích với phân phối của dữ liệu -- và là một I-map của $$\mathbb{P}_X$$ -- nếu tất cả các mệnh đề phân tách có hướng (d-separation) được biểu diễn trong đồ thị là tập con của tập mệnh đề độc lập có điều kiện trong phân phối dữ liệu quan sát.
-    """
-)
-st.latex(r"\mathcal{I}({\mathcal{G}}) \subseteq \mathcal{I}({\mathbb{P}_X})")
-
 st.markdown(r"""
     Một mệnh đề phân tách có hướng là biểu diễn trực quan của mệnh đề độ lập có điều kiện giữa hai biến trong 
     dữ liệu trên một đồ thị nhân quả Markov. Dựa trên một loại cấu trúc đặc biệt của đồ thị có hướng là **đối** (collider còn được gọi là immorality hay v-structure)
@@ -86,8 +79,64 @@ st.markdown(r"""
 )
 st.markdown(r"""
     Xét một đường đi $$\gamma = \langle \gamma_1 = i, \gamma_2, \dots, \gamma_M = j \rangle$$, nút $$\gamma_m$$ trên đường đi này được gọi là **đối** nếu các cạnh trên đường đi hội tụ vào nút $$\gamma_m$$, tức là $$\gamma_{m-1} \rightarrow \gamma_m \leftarrow \gamma_{m+1}$$.
-    Xét tập nút điều kiện $$C \subseteq \mathbf{X} \setminus \{X_i, X_j\}$$. Đường đi $$\gamma$$ chặn quan hệ giữa hai nút $$i$$ và $$j$$ nếu một trong hai điều kiện sau được thoả mãn
+    Xét tập nút điều kiện $$C \subseteq \mathbf{X} \setminus \{X_i, X_j\}$$. Đường đi $$\gamma$$ **chặn quan hệ** giữa hai nút $$i$$ và $$j$$ nếu một trong hai điều kiện sau được thoả mãn
     - Một nút bất kỳ thuộc $$\gamma$$ không phải là đối và thuộc tập điều kiện $$C$$.
     - Không có nút đối và con cháu của nút đối thuộc tập điều kiện $$C$$.
     """
 )
+st.markdown(r"""
+    Hai nút $$i$$ và $$j$$ được gọi là **phân tách có hướng** (d-separated) bởi tập nút điều kiện $$C$$ nếu mọi đường đi giữa $$i$$ và $$j$$ đều bị chặn quan hệ bởi $$C$$.
+    Tập mệnh đề phân tách có hướng của đồ thị $$\mathcal{G}$$ được định nghĩa
+    """)
+st.latex(r"\mathcal{I}_{\perp\!\!\!\perp}(\mathcal{G}) = \{(i, j, C) \mid i, j \in [p], C \subseteq [p]\setminus\{i, j\}, i \perp\kern-2.7pt\perp_G j \mid C\}")
+
+st.subheader("Independence Map")
+st.markdown(
+    r"""
+    Một đồ thị nhân quả Markov $$\mathcal{G}$$ được gọi là **Independence Map** (I-MAP) của phân phối dữ liệu quan sát $$\mathbb{P}_X$$ nếu tập mệnh đề phân tách có hướng trong đồ thị là tập con của tập mệnh đề độc lập có điều kiện trong phân phối dữ liệu.
+    Ở chiều ngược lại ta nói phân phối dữ liệu $$\mathbb{P}_X$$ thoả **tính chất Markov toàn cục** với đồ thị nhân quả Markov $$\mathcal{G}$$.
+    """
+)
+st.latex(r"\mathcal{I}({\mathcal{G}}) \subseteq \mathcal{I}({\mathbb{P}_X})")
+
+st.markdown(r"""
+    Hệ quả của tính chấy Markov toàn cục là phân phối $$P_X$$ có thể có nhiều đồ thị I-MAP khác nhau. Nếu các I-MAP này có cùng một tập mệnh đề phân tách có hướng thì chúng thuộc cùng một **lớp tương đương Markov** (Markov Equivalence Class - MEC).
+""")
+
+with st.expander("Ví dụ: Hai DAG thuộc cùng lớp tương đương Markov"):
+    st.markdown(
+        """
+        Cả hai đồ thị dưới đây có cùng skeleton (X1—X2—X3) và không có cấu trúc đối (v-structure),
+        nên chúng thuộc cùng một lớp tương đương Markov.
+        """
+    )
+
+    col_a, col_b = st.columns(2)
+
+    # Use Streamlit Graphviz for auto-scaling within columns
+    dot_a = """
+    digraph G {
+        graph [rankdir=LR, nodesep=0.3, ranksep=0.4, margin=0.02];
+        node [shape=ellipse];
+        X1 -> X2; X2 -> X3;
+    }
+    """
+    dot_b = """
+    digraph G {
+        graph [rankdir=LR, nodesep=0.3, ranksep=0.4, margin=0.02];
+        node [shape=ellipse];
+        X2 -> X1; X2 -> X3;
+    }
+    """
+
+    with col_a:
+            st.caption("DAG A: X1 → X2 → X3")
+            st.graphviz_chart(dot_a, use_container_width=True)
+
+    with col_b:
+            st.caption("DAG B: X1 ← X2 → X3")
+            st.graphviz_chart(dot_b, use_container_width=True)
+
+    # Shared d-separation statement for both DAGs
+    st.markdown("Phát biểu phân tách có hướng chung (d-separation):")
+    st.latex(r"X_1 \, \perp\!\!\!\perp \, X_3 \mid X_2")
