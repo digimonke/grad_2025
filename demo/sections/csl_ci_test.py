@@ -5,7 +5,7 @@ def render():
 
     st.markdown(
         """
-        Khai thác các mẫu hình và quan hệ giữa các biến trong dữ liệu là mục tiêu nghiên cứu của nhiều lĩnh vực như toán học thống kế, học máy.
+        Khai thác các mẫu hình và quan hệ giữa các biến trong dữ liệu là mục tiêu nghiên cứu của nhiều lĩnh vực như toán học thống kê, học máy.
         """)
     st.markdown(
         r"""
