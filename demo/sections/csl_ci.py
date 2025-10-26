@@ -13,7 +13,7 @@ def render():
     st.latex(r"\mathbb{P}(X \mid Y, Z) = \mathbb{P}(X \mid Z)")
     st.latex(r"\mathbb{P}(X, Y \mid Z) = \mathbb{P}(X \mid Z) \mathbb{P}(Y \mid Z)")
 
-    st.markdown(r"Tuỳ thuộc vào tính chất của dự liệu, ta có thể lựa chọn các phương pháp kiểm định như $$\chi^2$$-test, G-test, Fisher's Z-test, hoặc phương pháp dựa trên thông tin như Mutual Information để thực hiện kiểm định độc lập có điều kiện.")
+    st.markdown(r"Tuỳ thuộc vào tính chất của dữ liệu, ta có thể lựa chọn các phương pháp kiểm định như $$\chi^2$$-test, G-test, Fisher's Z-test, hoặc phương pháp dựa trên thông tin như Mutual Information để thực hiện kiểm định độc lập có điều kiện.")
     st.markdown(
         """
         Kết quả của thuật toán kiểm định độc lập có điều kiện là tập các mệnh đề độc lập có điều kiện giữa các biến trong dữ liệu.
