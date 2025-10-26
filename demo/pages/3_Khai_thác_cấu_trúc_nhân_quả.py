@@ -1,5 +1,5 @@
 import streamlit as st
-from sections import csl_ci, csl_csm, csl_algorithms
+from sections import csl_ci, csl_csm, csl_algorithms, csl_toy_example
 
 st.title("Khai thác cấu trúc quan hệ nhân quả từ dữ liệu")
 
@@ -19,3 +19,6 @@ csl_csm.render()
 
 # algorithms
 csl_algorithms.render()
+
+# toy example
+csl_toy_example.render()
