@@ -1,5 +1,5 @@
 import streamlit as st
-from sections import csl_ci, csl_csm
+from sections import csl_ci, csl_csm, csl_algorithms
 
 st.title("Xây dựng mạng quan hệ nhân quả từ dữ liệu")
 
@@ -16,3 +16,6 @@ csl_ci.render()
 
 # causal structure model
 csl_csm.render()
+
+# algorithms
+csl_algorithms.render()

@@ -77,9 +77,12 @@ def imap():
 
     imap_example()
 
-    st.warning(r"""
-        **Hệ quả của quan sát trên là các thuật toán xây dựng cấu trúc nhân quả chỉ có thể khôi phục được lớp tương đương Markov của đồ thị nhân quả Markov thật sự từ dữ liệu quan sát.
+    st.info(r"""
+        **Hệ quả của quan sát trên là các thuật toán xây dựng cấu trúc nhân quả chỉ có thể khôi phục được đến lớp tương đương Markov của đồ thị nhân quả Markov mục tiêu thông qua phân tích dữ liệu quan sát.**
     """)
+
+    st.markdown(r"""Các thuật toán xây dựng cấu trúc nhân quả sẽ cố gắng vượt qua giới hạn này bằng cách sử dụng thêm các giả định bổ sung (như giả định phi chu trình, tuyến tính, không có biến ẩn…),
+                sử dụng dữ liệu can thiệp (interventional data) hoặc sử dụng một nền tảng (prior) để xác định hướng của các cạnh trong đồ thị nhân quả Markov.""")
 
 
 def render():
