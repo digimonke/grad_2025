@@ -7,6 +7,7 @@ import networkx as nx
 from causallearn.graph.GraphClass import CausalGraph
 from networkx.drawing.nx_pydot import to_pydot
 import matplotlib.pyplot as plt
+from io import BytesIO
 
 def read_file(file):
     df = None
@@ -126,7 +127,6 @@ def draw_true_bn_graph(G: nx.DiGraph, width_px: int | None = None):
         pos = nx.spring_layout(G, seed=0)
         fig = plt.figure(figsize=(6, 4))
         nx.draw(G, pos, with_labels=True, node_color="#ffcc00", node_size=1200, arrows=True)
-        from io import BytesIO
         buf = BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
         plt.close(fig)
