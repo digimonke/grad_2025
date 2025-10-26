@@ -15,7 +15,7 @@ def constraint_based_methods():
 def score_based_methods():
     st.subheader("Nhóm phương pháp sử dụng điểm đánh giá")
     st.markdown(r"""
-        Nhóm phương pháp sử dụng điểm đánh giá xây dựng cấu trúc nhân quả sử dụng một hàm tính điểm để đánh giá cấu trúc nhân quả, nhắm đến việc tìm ra cấu trúc nhân quả với điểm tối ưu nhất.
+        Nhóm phương pháp sử dụng điểm đánh giá khai thác cấu trúc nhân quả sử dụng một hàm tính điểm để đánh giá cấu trúc nhân quả, nhắm đến việc tìm ra cấu trúc nhân quả với điểm tối ưu nhất.
         Hàm tính điểm được chọn dựa trên loại dữ liệu và các giả định về mô hình ví dụ như BDeu cho dữ liệu rời rạc, BIC/MDL cho dữ liệu liên tục.
         Các thuật toán thuộc nhóm này như GES (Greedy Equivalence Search) hoặc GOBNILP (Greedy Optimization for Bayesian Network structure learning using Integer Linear Programming) 
         sử dụng chiến thuật tìm kiếm với cực trị cục bộ (greedy search) để tìm ra cấu trúc nhân quả với điểm số tối ưu.
@@ -36,7 +36,7 @@ def score_based_methods():
 def render():
     st.header("Thuật toán")
 
-    st.write("Các thuật toán xây dựng cấu trúc nhân quả từ dữ liệu có thể được phân loại thành 3 nhóm chính là **nhóm phương pháp sử dụng ràng buộc**, " \
+    st.write("Các thuật toán khai thác cấu trúc nhân quả từ dữ liệu có thể được phân loại thành 3 nhóm chính là **nhóm phương pháp sử dụng ràng buộc**, " \
     "**nhóm phương pháp sử dụng điểm đánh giá** và **nhóm phương pháp tổng hợp** (constraint based, score based, hybrid methods).")
 
     st.markdown(
