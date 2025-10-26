@@ -30,7 +30,7 @@ st.write(
 )
 
 st.info("""
-    Tran web này được chia thành các đề mục như ở thanh điều hướng bên trái:
+    Trang web này được chia thành các đề mục như ở thanh điều hướng bên trái:
     - **Đồ thị tri thức**: Giới thiệu tổng quan về đồ thị tri thức, các thành phần cấu thành, vấn đề thiếu toàn vẹn trong đồ thị tri thức.
     - **Hoàn thiện đồ thị tri thức**: Trình bày các phương pháp hoàn thiện đồ thị tri thức kinh điển được phân loại thành hai nhóm chính: phương pháp dựa trên quy tắc và phương pháp dựa trên học máy.
     - **Khai thác mạng quan hệ nhân quả từ dữ liệu**: Giới thiệu tổng quan về khai thác mạng quan hệ nhân quả từ dữ liệu, các khái niệm nền tảng và các thuật toán phổ biến.
