@@ -36,7 +36,7 @@ def score_based_methods():
 def render():
     st.header("Thuật toán")
 
-    st.write("Các thuật toán xấy dựng cấu trúc nhân quả từ dữ liệu có thể được phân loại thành 3 nhóm chính là **nhóm phương pháp sử dụng ràng buộc**, " \
+    st.write("Các thuật toán xây dựng cấu trúc nhân quả từ dữ liệu có thể được phân loại thành 3 nhóm chính là **nhóm phương pháp sử dụng ràng buộc**, " \
     "**nhóm phương pháp sử dụng điểm đánh giá** và **nhóm phương pháp tổng hợp** (constraint based, score based, hybrid methods).")
 
     st.markdown(
