@@ -1,0 +1,19 @@
+# Core app
+streamlit==1.50.0
+altair==5.5.0
+
+# Data
+pandas==2.3.2
+numpy==2.0.1
+
+# ML / causal
+scikit-learn==1.7.2
+causal-learn==0.1.4.3
+networkx==3.5
+
+# Viz
+matplotlib==3.10.6
+pyvis==0.3.2
+
+# Utils
+requests==2.32.5
