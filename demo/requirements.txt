@@ -17,3 +17,6 @@ pyvis==0.3.2
 
 # Utils
 requests==2.32.5
+
+# lingam
+lingam==1.11.0

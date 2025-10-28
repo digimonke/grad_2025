@@ -32,15 +32,14 @@ def normalize_data(df):
 
     return df
 
-def draw_graph(cg: CausalGraph, labels, algo_name, width_px: int | None = None):
-    g = cg.G if algo_name == "PC" else cg['G']
+def draw_graph(cg: nx.DiGraph, labels, width_px: int | None = None):
     try:
-        pyd = GraphUtils.to_pydot(g, labels=labels)
+        pyd = GraphUtils.to_pydot(cg, labels=labels)
         png_bytes = pyd.create_png()   # returns PNG bytes
         if width_px is not None:
-            st.image(png_bytes, caption="Causal graph (pydot)", width=width_px)
+            st.image(png_bytes, width=width_px)
         else:
-            st.image(png_bytes, caption="Causal graph (pydot)", use_container_width=True)
+            st.image(png_bytes, use_container_width=True)
     except Exception as e:
         # Fallback: draw with NetworkX
         st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
@@ -75,7 +74,7 @@ def draw_graph(cg: CausalGraph, labels, algo_name, width_px: int | None = None):
 # Synthetic 5-node BN utilities
 # ----------------------------
 
-def get_true_bn():
+def get_example_bn():
     """Return a 5-node ground-truth DAG used for toy sampling."""
     G = nx.DiGraph()
     G.add_nodes_from(["X1", "X2", "X3", "X4", "X5"]) 
@@ -89,6 +88,28 @@ def get_true_bn():
     ])
     return G
 
+def get_example_cpdag():
+    """Return a 5-node CPDAG using a single NetworkX DiGraph for rendering.
+
+    We encode the undirected edge X2—X4 as a single edge with Graphviz
+    attribute dir="none" so it draws without arrowheads, while keeping other
+    edges directed. This avoids the undesirable double-arrows for that pair.
+    """
+    G = nx.DiGraph()
+    G.add_nodes_from(["X1", "X2", "X3", "X4", "X5"]) 
+
+    # Directed edges
+    G.add_edges_from([
+        ("X1", "X3"),
+        ("X2", "X3"),
+        ("X3", "X5"),
+        ("X4", "X5"),
+    ])
+
+    # Undirected visually: one edge with no arrowheads in Graphviz
+    # NetworkX -> pydot will pass the 'dir' attribute through to Graphviz (dot)
+    G.add_edge("X2", "X4", dir="none")
+    return G
 
 def _sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
@@ -113,15 +134,15 @@ def sample_from_true_bn(n_samples: int = 1000, seed: int | None = 0) -> pd.DataF
     return df
 
 
-def draw_true_bn_graph(G: nx.DiGraph, width_px: int | None = None):
+def draw_dag(G: nx.DiGraph, width_px: int | None = None):
     """Render the ground-truth DAG using pydot and display in Streamlit."""
     try:
         pyd = to_pydot(G)
         png_bytes = pyd.create_png()
         if width_px is not None:
-            st.image(png_bytes, caption="Ground-truth DAG (5-node BN)", width=width_px)
+            st.image(png_bytes, width=width_px)
         else:
-            st.image(png_bytes, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
+            st.image(png_bytes, use_container_width=True)
     except Exception as e:
         st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
         pos = nx.spring_layout(G, seed=0)
