@@ -165,6 +165,15 @@ def draw_dag(G: nx.DiGraph, width_px: int | None = None):
 # bnlearn / pgmpy helpers
 # ----------------------------
 
+def _dot_header(rankdir: str) -> List[str]:
+    """Return a standard DOT header ensuring consistent styling across graphs."""
+    return [
+        "digraph G {",
+        f"  rankdir={rankdir};",
+        "  graph [splines=true, overlap=false, nodesep=0.4, ranksep=0.6, pad=0.2, margin=0.02];",
+        "  node [shape=box, style=rounded, color=gray30, fontname=Helvetica, fontsize=12, penwidth=1.2];",
+    ]
+
 def pgmpy_model_to_dot(
     model,
     rankdir: str = "LR",
@@ -194,9 +203,7 @@ def pgmpy_model_to_dot(
         for u, v in highlight_edges:
             hset.add((str(u), str(v)))
 
-    lines = ["digraph G {"]
-    lines.append(f"  rankdir={rankdir};")
-    lines.append("  node [shape=box, style=rounded, color=gray30, fontname=Helvetica];")
+    lines = _dot_header(rankdir)
     if title:
         lines.append(f"  labelloc=\"t\"; label=\"{title}\";")
 
@@ -211,7 +218,7 @@ def pgmpy_model_to_dot(
         if (su_raw, sv_raw) in hset:
             lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
         else:
-            lines.append(f"  \"{su}\" -> \"{sv}\";")
+            lines.append(f"  \"{su}\" -> \"{sv}\" [penwidth=1.3];")
 
     lines.append("}")
     return "\n".join(lines)
@@ -250,11 +257,7 @@ def bnlearn_dag_to_dot(
                         continue
                     if isinstance(val, (int, float)) and val != 0:
                         edges.append((src, dst))
-            lines = [
-                "digraph G {",
-                "  rankdir=LR;",
-                "  node [shape=box, style=rounded, color=gray30, fontname=Helvetica];",
-            ]
+            lines = _dot_header("LR")
             for n in nodes:
                 safe = str(n).replace("\"", "\\\"")
                 lines.append(f"  \"{safe}\";")
@@ -271,7 +274,7 @@ def bnlearn_dag_to_dot(
                 if (su_raw, sv_raw) in hset:
                     lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
                 else:
-                    lines.append(f"  \"{su}\" -> \"{sv}\";")
+                    lines.append(f"  \"{su}\" -> \"{sv}\" [penwidth=1.3];")
             lines.append("}")
             return "\n".join(lines)
         except Exception:
@@ -449,3 +452,80 @@ def add_random_edges_acyclic(
         new_model = None  # type: ignore
 
     return new_model if new_model is not None else G, added
+
+
+# ----------------------------
+# Draw from adjacency with directed (1) and undirected (-1)
+# ----------------------------
+
+def adjacency_to_dot(
+    W: np.ndarray,
+    labels: Optional[List[str]] = None,
+    rankdir: str = "LR",
+    threshold: Optional[float] = None,
+    tol: float = 1e-8,
+) -> str:
+    """Build DOT from an adjacency matrix with entries {0, 1, -1}.
+
+    - 1 means directed edge i->j
+    - -1 means undirected edge between i and j (we draw once with dir="none").
+    - 0 means no edge.
+    If both a directed and undirected indicator are present between i and j, directed takes precedence.
+
+    Also supports weighted adjacency matrices by using a threshold or tolerance:
+    - If threshold is None, any abs(W[i,j]) > tol is considered non-zero.
+    - If both directions i->j and j->i are non-zero within tolerance, the edge is rendered undirected
+      unless one direction has strictly larger absolute weight (then we pick that direction).
+    """
+    if W.ndim != 2 or W.shape[0] != W.shape[1]:
+        raise ValueError("W must be a square matrix")
+    d = W.shape[0]
+    if labels is None:
+        labels = [f"X{i+1}" for i in range(d)]
+    if len(labels) != d:
+        raise ValueError("labels length must match W dimension")
+
+    def nonzero(x: float) -> bool:
+        thr = tol if threshold is None else float(threshold)
+        return abs(float(x)) > thr
+
+    directed: List[Tuple[int, int]] = []
+    undirected_pairs: Set[Tuple[int, int]] = set()
+
+    for i in range(d):
+        for j in range(i + 1, d):
+            a = float(W[i, j])
+            b = float(W[j, i])
+            ai = nonzero(a)
+            bj = nonzero(b)
+            if ai and bj:
+                # both directions present -> pick stronger direction if clearly stronger, else undirected
+                if abs(a) > abs(b) + tol:
+                    directed.append((i, j))
+                elif abs(b) > abs(a) + tol:
+                    directed.append((j, i))
+                else:
+                    undirected_pairs.add((i, j))
+            elif ai:
+                directed.append((i, j))
+            elif bj:
+                directed.append((j, i))
+
+    lines = _dot_header(rankdir)
+
+    for n in labels:
+        safe = str(n).replace("\"", "\\\"")
+        lines.append(f"  \"{safe}\";")
+
+    for i, j in directed:
+        su = str(labels[i]).replace("\"", "\\\"")
+        sv = str(labels[j]).replace("\"", "\\\"")
+        lines.append(f"  \"{su}\" -> \"{sv}\" [penwidth=1.3];")
+
+    for i, j in undirected_pairs:
+        su = str(labels[i]).replace("\"", "\\\"")
+        sv = str(labels[j]).replace("\"", "\\\"")
+        lines.append(f"  \"{su}\" -> \"{sv}\" [dir=none, penwidth=1.3];")
+
+    lines.append("}")
+    return "\n".join(lines)

@@ -1,12 +1,12 @@
 import streamlit as st
-from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic
+import pandas as pd
+from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic, adjacency_to_dot
+from algo.algo import causal_discovery
+
 import requests
 import gzip
 from io import BytesIO
-try:
-	from pgmpy.readwrite import BIFReader
-except Exception:
-	BIFReader = None
+from pgmpy.readwrite import BIFReader
 	
 st.title("Thực nghiệm")
 st.markdown("""
@@ -22,6 +22,8 @@ if 'dag' not in st.session_state:
 	st.session_state.dag = None
 if 'negative_dag' not in st.session_state:
 	st.session_state.negative_dag = None
+if 'simulated_df' not in st.session_state:
+	st.session_state.simulated_df = None
 
 if st.session_state.dag is None:
 	# Download BIF.gz on demand and parse fully in-memory
@@ -53,11 +55,11 @@ if st.session_state.dag is None:
 	
 # Show basic info
 try:
-    n_nodes = len(st.session_state.dag.nodes())
-    n_edges = len(st.session_state.dag.edges())
-    st.caption(f"DAG 'insurance': {n_nodes} nút, {n_edges} cạnh")
+	n_nodes = len(st.session_state.dag.nodes())
+	n_edges = len(st.session_state.dag.edges())
+	st.caption(f"DAG 'insurance': {n_nodes} nút, {n_edges} cạnh")
 except Exception:
-    st.caption("Không đọc được thông tin nút/cạnh từ DAG.")
+	st.caption("Không đọc được thông tin nút/cạnh từ DAG.")
 
 # Render with Graphviz in Streamlit (no system Graphviz required)
 dot = bnlearn_dag_to_dot({"model": st.session_state.dag})
@@ -134,3 +136,17 @@ else:
 
 # 4. Run causal discovery to try to recover true structure from data
 st.subheader("Khai thác cấu trúc nhân quả từ dữ liệu")
+if st.session_state.simulated_df is not None:
+	with st.spinner("Đang khai thác cấu trúc nhân quả..."):
+		try:
+			W_est = causal_discovery(st.session_state.simulated_df)
+			st.session_state.W_est = W_est
+			# node names from simulated data
+			df_cols = list(st.session_state.simulated_df.columns)
+			default_labels_list = df_cols
+			st.write(W_est)
+			dot_W = adjacency_to_dot(W_est, labels=default_labels_list, rankdir='LR')
+			st.graphviz_chart(dot_W, use_container_width=True)
+			st.success("Khai thác cấu trúc nhân quả thành công.")
+		except Exception as e:
+			st.error(f"Không thể khai thác cấu trúc nhân quả: {e}")
