@@ -63,7 +63,29 @@ except Exception:
 dot = bnlearn_dag_to_dot({"model": st.session_state.dag})
 st.graphviz_chart(dot, use_container_width=True)
 
-# 2. dữ liệu mô phỏng
+# 2. Perturb structure: add random edges without cycles
+st.subheader("Gây nhiễu cấu trúc")
+if st.session_state.dag is not None:
+	st.markdown("""
+       Nhằm mô phỏng lại những cạnh nhiễu thường thấy trong đồ thị tri thức thực tế, ta tiến hành thêm ngẫu nhiên một số cạnh vào DAG hiện tại
+       trong khi vẫn giữ tính chất không chu trình (acyclic). Nhiệm vụ của thuật toán là phát hiện và loại bỏ các cạnh nhiễu này.
+	""")
+	c1, c2 = st.columns([1, 1])
+	with c1:
+		k_add = st.number_input("Số cạnh nhiễu", min_value=3, max_value=26, value=12, step=1)
+	with c2:
+		seed = st.number_input("Random seed", min_value=0, max_value=10, value=1, step=1)
+
+	do_perturb = st.button("Thêm nhiễu")
+	if do_perturb:
+		with st.spinner("Đang thêm cạnh ngẫu nhiên và kiểm tra chu trình..."):
+			new_model, added_edges = add_random_edges_acyclic(st.session_state.dag, n_add=int(k_add), seed=int(seed))
+			st.caption("DAG sau khi thêm cạnh (cạnh mới tô đỏ):")
+			dot_new = bnlearn_dag_to_dot({"model": new_model}, highlight_edges=added_edges)
+			st.graphviz_chart(dot_new, use_container_width=True)
+			st.session_state.negative_dag = new_model
+
+# 3. dữ liệu mô phỏng
 st.subheader("Dữ liệu mô phỏng từ DAG")
 st.markdown("""
     Xem đồ thị tri thức trên như một mạng nhân Bayes biểu diễn chuỗi nhân quả hoàn chỉnh giữa các biến trong dữ liệu.
@@ -98,36 +120,17 @@ if st.session_state.dag is not None:
 				df_sim = simulate_nonlinear_sem_from_pgmpy(
 					st.session_state.dag, n=int(n_samples), sem_type=sem_choice, noise_scale=float(noise_scale)
 				)
-				st.session_state["simulated_df"] = df_sim
+				st.session_state.simulated_df = df_sim
 				st.success(f"Đã tạo dữ liệu: {df_sim.shape[0]}x{df_sim.shape[1]}. 20 dòng đầu tiên hiển thị bên dưới.")
 			except Exception as e:
 				st.error(f"Không thể mô phỏng dữ liệu: {e}")
 
-	df_sim = st.session_state.get("simulated_df")
+	df_sim = st.session_state.simulated_df
 	if df_sim is not None:
 		st.dataframe(df_sim.head(20), use_container_width=True)
 
 else:
 	st.info("Chưa có DAG để mô phỏng. Hãy tải DAG trước.")
 
-# 3. Perturb structure: add random edges without cycles
-st.subheader("Gây nhiễu cấu trúc")
-if st.session_state.dag is not None:
-	st.markdown("""
-       Nhằm mô phỏng lại những cạnh nhiễu thường thấy trong đồ thị tri thức thực tế, ta tiến hành thêm ngẫu nhiên một số cạnh vào DAG hiện tại
-       trong khi vẫn giữ tính chất không chu trình (acyclic). Nhiệm vụ của thuật toán là phát hiện và loại bỏ các cạnh nhiễu này.
-	""")
-	c1, c2 = st.columns([1, 1])
-	with c1:
-		k_add = st.number_input("Số cạnh nhiễu", min_value=3, max_value=26, value=12, step=1)
-	with c2:
-		seed = st.number_input("Random seed", min_value=0, max_value=10, value=1, step=1)
-
-	do_perturb = st.button("Thêm nhiễu")
-	if do_perturb:
-		with st.spinner("Đang thêm cạnh ngẫu nhiên và kiểm tra chu trình..."):
-			new_model, added_edges = add_random_edges_acyclic(st.session_state.dag, n_add=int(k_add), seed=int(seed))
-			st.caption("DAG sau khi thêm cạnh (cạnh mới tô đỏ):")
-			dot_new = bnlearn_dag_to_dot({"model": new_model}, highlight_edges=added_edges)
-			st.graphviz_chart(dot_new, use_container_width=True)
-			st.session_state.negative_dag = new_model
+# 4. Run causal discovery to try to recover true structure from data
+st.subheader("Khai thác cấu trúc nhân quả từ dữ liệu")

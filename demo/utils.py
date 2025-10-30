@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from typing import Optional, Union, List, Tuple, Iterable, Set
 from sklearn.gaussian_process import GaussianProcessRegressor
+from pgmpy.models import BayesianModel
 
 def read_file(file):
     df = None
@@ -62,7 +63,6 @@ def draw_graph(cg: nx.DiGraph, labels, width_px: int | None = None):
         pos = nx.spring_layout(H, seed=0)
         fig = plt.figure(figsize=(6, 4))
         nx.draw(H, pos, with_labels=True, node_color="#87cefa", node_size=1200, arrows=True)
-        from io import BytesIO
         buf = BytesIO()
         plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
         plt.close(fig)
@@ -407,10 +407,6 @@ def add_random_edges_acyclic(
     - Preserves nodes; ignores/does not preserve CPDs (structure-only).
     - If fewer than n_add edges can be added without cycles, adds as many as possible.
     """
-    try:
-        from pgmpy.models import BayesianModel
-    except Exception:
-        BayesianModel = None  # type: ignore
 
     nodes = list(model.nodes())
     existing = set(model.edges())
