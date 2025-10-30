@@ -7,7 +7,7 @@ import networkx as nx
 from networkx.drawing.nx_pydot import to_pydot
 import matplotlib.pyplot as plt
 from io import BytesIO
-from typing import Optional, Union, List, Tuple
+from typing import Optional, Union, List, Tuple, Iterable, Set
 from sklearn.gaussian_process import GaussianProcessRegressor
 
 def read_file(file):
@@ -165,7 +165,12 @@ def draw_dag(G: nx.DiGraph, width_px: int | None = None):
 # bnlearn / pgmpy helpers
 # ----------------------------
 
-def pgmpy_model_to_dot(model, rankdir: str = "LR", title: str | None = None) -> str:
+def pgmpy_model_to_dot(
+    model,
+    rankdir: str = "LR",
+    title: str | None = None,
+    highlight_edges: Optional[Iterable[Tuple[str, str]]] = None,
+) -> str:
     """Build a Graphviz DOT string from a pgmpy BayesianModel without requiring graphviz/pydot.
 
     Parameters
@@ -183,6 +188,12 @@ def pgmpy_model_to_dot(model, rankdir: str = "LR", title: str | None = None) -> 
     except Exception:
         edges = []
 
+    # Normalize highlight set to strings for easy matching
+    hset: Set[Tuple[str, str]] = set()
+    if highlight_edges is not None:
+        for u, v in highlight_edges:
+            hset.add((str(u), str(v)))
+
     lines = ["digraph G {"]
     lines.append(f"  rankdir={rankdir};")
     lines.append("  node [shape=box, style=rounded, color=gray30, fontname=Helvetica];")
@@ -194,15 +205,22 @@ def pgmpy_model_to_dot(model, rankdir: str = "LR", title: str | None = None) -> 
         lines.append(f"  \"{safe}\";")
 
     for u, v in edges:
-        su = str(u).replace("\"", "\\\"")
-        sv = str(v).replace("\"", "\\\"")
-        lines.append(f"  \"{su}\" -> \"{sv}\";")
+        su_raw, sv_raw = str(u), str(v)
+        su = su_raw.replace("\"", "\\\"")
+        sv = sv_raw.replace("\"", "\\\"")
+        if (su_raw, sv_raw) in hset:
+            lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
+        else:
+            lines.append(f"  \"{su}\" -> \"{sv}\";")
 
     lines.append("}")
     return "\n".join(lines)
 
 
-def bnlearn_dag_to_dot(dag) -> str:
+def bnlearn_dag_to_dot(
+    dag,
+    highlight_edges: Optional[Iterable[Tuple[str, str]]] = None,
+) -> str:
     """Accept a bnlearn DAG object and return a DOT string.
 
     bnlearn.import_DAG(...) typically returns a dict with keys like 'model' and 'adjmat'.
@@ -218,7 +236,7 @@ def bnlearn_dag_to_dot(dag) -> str:
         adj = getattr(dag, "adjmat", None)
 
     if model is not None:
-        return pgmpy_model_to_dot(model, rankdir="LR")
+        return pgmpy_model_to_dot(model, rankdir="LR", highlight_edges=highlight_edges)
 
     if adj is not None:
         try:
@@ -240,10 +258,20 @@ def bnlearn_dag_to_dot(dag) -> str:
             for n in nodes:
                 safe = str(n).replace("\"", "\\\"")
                 lines.append(f"  \"{safe}\";")
+            # Normalize highlight set
+            hset: Set[Tuple[str, str]] = set()
+            if highlight_edges is not None:
+                for uu, vv in highlight_edges:
+                    hset.add((str(uu), str(vv)))
+
             for u, v in edges:
-                su = str(u).replace("\"", "\\\"")
-                sv = str(v).replace("\"", "\\\"")
-                lines.append(f"  \"{su}\" -> \"{sv}\";")
+                su_raw, sv_raw = str(u), str(v)
+                su = su_raw.replace("\"", "\\\"")
+                sv = sv_raw.replace("\"", "\\\"")
+                if (su_raw, sv_raw) in hset:
+                    lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
+                else:
+                    lines.append(f"  \"{su}\" -> \"{sv}\";")
             lines.append("}")
             return "\n".join(lines)
         except Exception:
@@ -362,3 +390,66 @@ def simulate_nonlinear_sem_from_pgmpy(
     if as_dataframe:
         return pd.DataFrame(X, columns=node_order)
     return X, node_order
+
+
+# ----------------------------
+# DAG perturbation utilities
+# ----------------------------
+
+def add_random_edges_acyclic(
+    model,
+    n_add: int,
+    seed: Optional[int] = None,
+) -> Tuple[object, List[Tuple[str, str]]]:
+    """Return a new pgmpy BayesianModel with up to n_add random edges added without creating cycles.
+
+    - Does NOT modify the input model.
+    - Preserves nodes; ignores/does not preserve CPDs (structure-only).
+    - If fewer than n_add edges can be added without cycles, adds as many as possible.
+    """
+    try:
+        from pgmpy.models import BayesianModel
+    except Exception:
+        BayesianModel = None  # type: ignore
+
+    nodes = list(model.nodes())
+    existing = set(model.edges())
+
+    # Build candidate edges (u->v) not present and u!=v
+    candidates: List[Tuple[str, str]] = []
+    for u in nodes:
+        for v in nodes:
+            if u == v:
+                continue
+            if (u, v) in existing:
+                continue
+            candidates.append((u, v))
+
+    rng = np.random.default_rng(seed)
+    rng.shuffle(candidates)
+
+    # Maintain a working NX graph to check reachability efficiently
+    G = nx.DiGraph()
+    G.add_nodes_from(nodes)
+    G.add_edges_from(existing)
+
+    added: List[Tuple[str, str]] = []
+    for u, v in candidates:
+        # Adding u->v would create a cycle iff there's already a path v->u
+        if nx.has_path(G, v, u):
+            continue
+        G.add_edge(u, v)
+        added.append((u, v))
+        if len(added) >= n_add:
+            break
+
+    # Build a fresh BayesianModel with new edges
+    if BayesianModel is not None:
+        new_model = BayesianModel()
+        new_model.add_nodes_from(nodes)
+        new_model.add_edges_from(G.edges())
+    else:
+        # Fallback: return the edges via networkx graph and caller can wrap
+        new_model = None  # type: ignore
+
+    return new_model if new_model is not None else G, added

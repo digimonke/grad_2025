@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy
+from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic
 import requests
 import gzip
 from io import BytesIO
@@ -20,6 +20,8 @@ st.subheader("Đồ thị tri thức")
 # Use session state to load on demand without writing anything to disk
 if 'dag' not in st.session_state:
 	st.session_state.dag = None
+if 'negative_dag' not in st.session_state:
+	st.session_state.negative_dag = None
 
 if st.session_state.dag is None:
 	# Download BIF.gz on demand and parse fully in-memory
@@ -73,9 +75,16 @@ st.markdown("""
 
 if st.session_state.dag is not None:
 	with st.form(key="simulate_form"):
-		c1, c2, c3 = st.columns([1.2, 1, 1])
+		c1, c2, c3 = st.columns([1.6, 1, 1])
 		with c1:
-			sem_type = st.selectbox("Cấu tạo hàm (functional form)", options=["Multilayer Perceptron", "Gaussian Process"], index=0)
+			sem_choice = st.selectbox(
+				"Cấu tạo hàm (functional form)",
+				options=[
+					"Multilayer Perceptron",
+					"Gaussian Process",
+				],
+				index=0,
+			)
 		with c2:
 			n_samples = st.number_input("Số mẫu", min_value=10, max_value=20000, value=1000, step=100)
 		with c3:
@@ -87,7 +96,7 @@ if st.session_state.dag is not None:
 		with st.spinner("Đang mô phỏng dữ liệu..."):
 			try:
 				df_sim = simulate_nonlinear_sem_from_pgmpy(
-					st.session_state.dag, n=int(n_samples), sem_type=sem_type, noise_scale=float(noise_scale)
+					st.session_state.dag, n=int(n_samples), sem_type=sem_choice, noise_scale=float(noise_scale)
 				)
 				st.session_state["simulated_df"] = df_sim
 				st.success(f"Đã tạo dữ liệu: {df_sim.shape[0]}x{df_sim.shape[1]}. 20 dòng đầu tiên hiển thị bên dưới.")
@@ -101,5 +110,24 @@ if st.session_state.dag is not None:
 else:
 	st.info("Chưa có DAG để mô phỏng. Hãy tải DAG trước.")
 
-# 3. Negative sampling
-st.subheader("Gây nhiễu đồ thị tri thức")
+# 3. Perturb structure: add random edges without cycles
+st.subheader("Gây nhiễu cấu trúc")
+if st.session_state.dag is not None:
+	st.markdown("""
+       Nhằm mô phỏng lại những cạnh nhiễu thường thấy trong đồ thị tri thức thực tế, ta tiến hành thêm ngẫu nhiên một số cạnh vào DAG hiện tại
+       trong khi vẫn giữ tính chất không chu trình (acyclic). Nhiệm vụ của thuật toán là phát hiện và loại bỏ các cạnh nhiễu này.
+	""")
+	c1, c2 = st.columns([1, 1])
+	with c1:
+		k_add = st.number_input("Số cạnh nhiễu", min_value=3, max_value=26, value=12, step=1)
+	with c2:
+		seed = st.number_input("Random seed", min_value=0, max_value=10, value=1, step=1)
+
+	do_perturb = st.button("Thêm nhiễu")
+	if do_perturb:
+		with st.spinner("Đang thêm cạnh ngẫu nhiên và kiểm tra chu trình..."):
+			new_model, added_edges = add_random_edges_acyclic(st.session_state.dag, n_add=int(k_add), seed=int(seed))
+			st.caption("DAG sau khi thêm cạnh (cạnh mới tô đỏ):")
+			dot_new = bnlearn_dag_to_dot({"model": new_model}, highlight_edges=added_edges)
+			st.graphviz_chart(dot_new, use_container_width=True)
+			st.session_state.negative_dag = new_model
