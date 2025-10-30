@@ -23,7 +23,7 @@ st.info("""
 st.header("Khai thác cấu trúc nhân quả từ dữ liệu")
 st.markdown(r"""
     Xét bộ dữ liệu $$\mathcal{D}=X_{M \times N}$$ với $$M$$ dòng và $$N$$ cột. Mỗi cột trong bộ dữ liệu đại diện cho một biến $$D_i$$, tương ứng với
-    một thực thể thuộc đồ thị tri thức $$X_i$$. Gọi $$\mathcal{G^*}$$ là mạng nhân quả mục tiêu cần khai thác từ bộ dữ liệu $$\mathcal{D}$$.
+    một thực thể thuộc đồ thị tri thức $$x_i$$. Gọi $$\mathcal{G^*}$$ là mạng nhân quả mục tiêu cần khai thác từ bộ dữ liệu $$\mathcal{D}$$.
     Đa phần các phương pháp khai thác cấu trúc nhân quả từ dữ liệu chỉ có thể khôi phục được một lớp tương đương Markov $$\text{MEC}(\mathcal{G^*})$$ của mạng nhân quả mục tiêu
     nếu chỉ dựa trên phân phối của dữ liệu mà không có thêm giả định hoặc thông tin bổ sung nào khác.
 """)
@@ -38,7 +38,27 @@ st.markdown(r"""
 """)
 
 st.markdown(r"""
-    
+    Các thuật toán học cấu trúc nhân quả phổ biến như PC, GES hoặc LiNGAM đều hỗ trợ xử lý thông tin bổ sung dưới dạng ràng buộc phả hệ (ancestral constraints),
+    bắt một tập nút phải được sắp xếp theo thứ tự trong chuỗi nhân quả. Ở ví dụ hiện tại, ta có thể cung cấp ràng buộc phả hệ rằng $$X_2$$ phải là
+    tổ tiên (ancestor) của tất cả các nút khác trong đồ thị, từ đó giúp thu hẹp không gian tìm kiếm cấu trúc đồ thị nhân quả, cho ra kết quả chính xác hơn.
 """)
 
 st.divider()
+st.header("Hoàn thiện đồ thị tri thức")
+
+st.markdown(r"""
+    Xét đồ thị tri thức $$\mathcal{K}$$ có tập nút $$V_{\mathcal{K}} = \{x^k_1, x^k_2, \ldots, x^k_n\}$$, tập cạnh $$E_{\mathcal{K}} = {(x^k_i, x^k_j) | x^k_i, x^k_j \in V_{\mathcal{K}}}$$
+    và mạng nhân quả $$\mathcal{G^*}$$ với bộ tham số $$X = \{x^G_1, x^G_2, \ldots, x^G_n\}$$ và tập cạnh $$E_{\mathcal{G^*}} = {(x^G_i, x^G_j) | x^G_i, x^G_j \in X}$$.
+    So khớp tập cạnh giữa hai đồ thị này, ta có tập cạnh lỗi tiềm năng
+""")
+st.latex(r"{E`}_{\mathcal{K}} = \{(x^k_i, x^k_j) \mid (x^k_i, x^k_j) \in E_{\mathcal{K}} \land (x^G_i, x^G_j) \notin E_{\mathcal{G^*}}\}")
+
+st.markdown(r"""
+    Một tập cạnh tồn tại trong đồ thị tri thức nhưng dữ liệu được ghi nhận thực tế về sự tương tác giữa các thực thể này không ủng hộ mối quan hệ nhân quả đó có thể được coi là cạnh lỗi.
+    Tuy nhiên, không phải tất cả các cạnh trong tập cạnh lỗi tiềm năng $$E`_{\mathcal{K}}$$ đều thực sự là cạnh lỗi bởi chính mạng nhân quả có thể thiếu hoàn thiện
+    do được xây dựng từ tập dữ liệu hữu hạn hoặc bị ảnh hưởng bởi nhiễu. VD: $$x_i = 0.001x_j + \mathcal{N}(0,1)$$
+""")
+
+st.markdown(r"""
+    
+""")

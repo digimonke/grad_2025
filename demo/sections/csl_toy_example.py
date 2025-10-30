@@ -57,7 +57,6 @@ def render():
         with col_right:
             st.caption(f"Đồ thị học được ({algo})")
             g = cg.G if algo == "PC" else cg['G']
-            st.write(list(g.edges(data=True)))
             utils.draw_graph(g, labels=labels, width_px=300)
     else:
         st.info("Trong phần Ví dụ nhỏ: Chọn tham số và bấm 'Chạy' để tạo dữ liệu và học đồ thị.")

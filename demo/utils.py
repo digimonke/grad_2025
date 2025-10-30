@@ -156,3 +156,94 @@ def draw_dag(G: nx.DiGraph, width_px: int | None = None):
             st.image(img, caption="Ground-truth DAG (5-node BN)", width=width_px)
         else:
             st.image(img, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
+
+
+# ----------------------------
+# bnlearn / pgmpy helpers
+# ----------------------------
+
+def pgmpy_model_to_dot(model, rankdir: str = "LR", title: str | None = None) -> str:
+    """Build a Graphviz DOT string from a pgmpy BayesianModel without requiring graphviz/pydot.
+
+    Parameters
+    - model: pgmpy.models.BayesianModel or any object exposing .nodes() and .edges()
+    - rankdir: 'LR' (left-to-right) or 'TB' (top-to-bottom)
+    - title: optional graph label
+    """
+    # Gather nodes and edges defensively
+    try:
+        nodes = list(model.nodes())
+    except Exception:
+        nodes = []
+    try:
+        edges = list(model.edges())
+    except Exception:
+        edges = []
+
+    lines = ["digraph G {"]
+    lines.append(f"  rankdir={rankdir};")
+    lines.append("  node [shape=box, style=rounded, color=gray30, fontname=Helvetica];")
+    if title:
+        lines.append(f"  labelloc=\"t\"; label=\"{title}\";")
+
+    for n in nodes:
+        safe = str(n).replace("\"", "\\\"")
+        lines.append(f"  \"{safe}\";")
+
+    for u, v in edges:
+        su = str(u).replace("\"", "\\\"")
+        sv = str(v).replace("\"", "\\\"")
+        lines.append(f"  \"{su}\" -> \"{sv}\";")
+
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def bnlearn_dag_to_dot(dag) -> str:
+    """Accept a bnlearn DAG object and return a DOT string.
+
+    bnlearn.import_DAG(...) typically returns a dict with keys like 'model' and 'adjmat'.
+    This function tries 'model' first, then falls back to adjacency matrix if present.
+    """
+    model = None
+    adj = None
+    if isinstance(dag, dict):
+        model = dag.get("model")
+        adj = dag.get("adjmat")
+    else:
+        model = getattr(dag, "model", None)
+        adj = getattr(dag, "adjmat", None)
+
+    if model is not None:
+        return pgmpy_model_to_dot(model, rankdir="LR")
+
+    if adj is not None:
+        try:
+            nodes = list(adj.columns)
+            edges = []
+            for i, src in enumerate(nodes):
+                for j, dst in enumerate(nodes):
+                    try:
+                        val = adj.iloc[i, j]
+                    except Exception:
+                        continue
+                    if isinstance(val, (int, float)) and val != 0:
+                        edges.append((src, dst))
+            lines = [
+                "digraph G {",
+                "  rankdir=LR;",
+                "  node [shape=box, style=rounded, color=gray30, fontname=Helvetica];",
+            ]
+            for n in nodes:
+                safe = str(n).replace("\"", "\\\"")
+                lines.append(f"  \"{safe}\";")
+            for u, v in edges:
+                su = str(u).replace("\"", "\\\"")
+                sv = str(v).replace("\"", "\\\"")
+                lines.append(f"  \"{su}\" -> \"{sv}\";")
+            lines.append("}")
+            return "\n".join(lines)
+        except Exception:
+            pass
+
+    return "digraph G { rankdir=LR; }"

@@ -20,3 +20,6 @@ requests==2.32.5
 
 # lingam
 lingam==1.11.0
+
+# bnlearn for Bayesian networks
+bnlearn>=0.8,<0.9
