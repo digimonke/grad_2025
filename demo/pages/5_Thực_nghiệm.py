@@ -7,9 +7,15 @@ try:
 	from pgmpy.readwrite import BIFReader
 except Exception:
 	BIFReader = None
+	
+st.title("Thực nghiệm")
+st.markdown("""
+    Sau đây là một thực nghiệm nhỏ của nghiên cứu dựa trên thuật toán được đề xuất. Nghiên cứu sử dụng đồ thị với mã nguồn mở
+	từ thư viện bnlearn với 27 nút và 52 cạnh, mô tả chuỗi nhân quả giữa các thực thể trong lĩnh vực bảo hiểm tài sản và tai nạn.
+""")
 
 # 1. import example
-st.subheader("Cấu trúc nhân quả mục tiêu")
+st.subheader("Đồ thị tri thức")
 
 # Use session state to load on demand without writing anything to disk
 if 'dag' not in st.session_state:
@@ -55,8 +61,15 @@ except Exception:
 dot = bnlearn_dag_to_dot({"model": st.session_state.dag})
 st.graphviz_chart(dot, use_container_width=True)
 
-# 2 dữ liệu mô phỏng
+# 2. dữ liệu mô phỏng
 st.subheader("Dữ liệu mô phỏng từ DAG")
+st.markdown("""
+    Xem đồ thị tri thức trên như một mạng nhân Bayes biểu diễn chuỗi nhân quả hoàn chỉnh giữa các biến trong dữ liệu.
+	Nghiên cứu mô phỏng dữ liệu từ mạng Bayes này bằng các hàm phi tuyến tính với nhiễu ngẫu nhiên theo phân phối chuẩn để tạo ra tập dữ liệu mô phỏng.
+	Dữ liệu được tạo ra tuần theo các giả định sau:
+	- **Giả định hoàn thiện nhân quả (Causal Sufficiency)**: Giả định rằng tất cả các biến trong hệ thống (causal variables) đều đã được quan sát và không có biến ẩn (latent confounding) nằm ngoài tập dữ liệu.
+    - **Giả định Markov (Causal Markov Assumption)**: Mỗi biến trong mạng nhân quả là độc lập có điều kiện với các biến không phải là hậu duệ của nó, khi biết giá trị của các biến cha.
+""")
 
 if st.session_state.dag is not None:
 	with st.form(key="simulate_form"):
@@ -87,3 +100,6 @@ if st.session_state.dag is not None:
 
 else:
 	st.info("Chưa có DAG để mô phỏng. Hãy tải DAG trước.")
+
+# 3. Negative sampling
+st.subheader("Gây nhiễu đồ thị tri thức")
