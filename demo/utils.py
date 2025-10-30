@@ -4,10 +4,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import networkx as nx
-from causallearn.graph.GraphClass import CausalGraph
 from networkx.drawing.nx_pydot import to_pydot
 import matplotlib.pyplot as plt
 from io import BytesIO
+from typing import Optional, Union, List, Tuple
+from sklearn.gaussian_process import GaussianProcessRegressor
 
 def read_file(file):
     df = None
@@ -47,13 +48,15 @@ def draw_graph(cg: nx.DiGraph, labels, width_px: int | None = None):
         # causal-learn Graph has nodes as indices 0..n-1
         for i, lab in enumerate(labels):
             H.add_node(lab)
-        # edges: try to get from pydot conversion; fallback to adjacency matrix
+        # edges: extract from networkx DiGraph if available
         try:
-            # Attempt to extract adjacency from cg directly
-            for i in range(len(labels)):
-                for j in range(len(labels)):
-                    if g.graph[i][j] == 1:
-                        H.add_edge(labels[i], labels[j])
+            if isinstance(cg, nx.DiGraph):
+                for u, v in cg.edges():
+                    # If nodes are indices, map via labels
+                    if isinstance(u, int) and 0 <= u < len(labels) and isinstance(v, int) and 0 <= v < len(labels):
+                        H.add_edge(labels[u], labels[v])
+                    else:
+                        H.add_edge(str(u), str(v))
         except Exception:
             pass
         pos = nx.spring_layout(H, seed=0)
@@ -247,3 +250,115 @@ def bnlearn_dag_to_dot(dag) -> str:
             pass
 
     return "digraph G { rankdir=LR; }"
+
+
+# ----------------------------
+# Nonlinear SEM simulation
+# ----------------------------
+
+def sigmoid(x: np.ndarray) -> np.ndarray:
+    return 1.0 / (1.0 + np.exp(-x))
+
+
+def simulate_nonlinear_sem(
+    B: np.ndarray,
+    n: int,
+    sem_type: str,
+    noise_scale: Optional[Union[float, List[float]]] = None,
+) -> np.ndarray:
+    """Simulate samples from a nonlinear SEM defined by adjacency B.
+
+    Parameters
+    ----------
+    B : np.ndarray
+        [d, d] binary adj matrix of DAG (1 indicates edge i->j).
+    n : int
+        Number of samples.
+    sem_type : str
+        'mlp', 'mim', 'gp', or 'gp-add'.
+    noise_scale : float | list[float] | None
+        Scale parameter(s) of additive Gaussian noises. If None, all ones.
+
+    Returns
+    -------
+    np.ndarray
+        [n, d] sample matrix.
+    """
+    
+    d = B.shape[0]
+    if noise_scale is None:
+        scale_vec = np.ones(d)
+    elif isinstance(noise_scale, (int, float)):
+        scale_vec = np.ones(d) * float(noise_scale)
+    else:
+        scale_vec = np.asarray(noise_scale, dtype=float)
+        assert scale_vec.shape[0] == d, "noise_scale length must equal number of variables"
+
+    # Build graph and obtain topological order
+    G = nx.DiGraph()
+    G.add_nodes_from(range(d))
+    srcs, dsts = np.where(B != 0)
+    G.add_edges_from(zip(srcs.tolist(), dsts.tolist()))
+    ordered_vertices = list(nx.topological_sort(G))
+    assert len(ordered_vertices) == d, "Topological sorting failed to include all nodes"
+
+    def _simulate_single_equation(X: np.ndarray, scale: float) -> np.ndarray:
+        # X: [n, num_parents]
+        z = np.random.normal(scale=scale, size=n)
+        pa_size = X.shape[1]
+        if pa_size == 0:
+            return z
+        if sem_type == 'Multilayer Perceptron':
+            hidden = 100
+            W1 = np.random.uniform(low=0.5, high=2.0, size=[pa_size, hidden])
+            W1[np.random.rand(*W1.shape) < 0.5] *= -1
+            W2 = np.random.uniform(low=0.5, high=2.0, size=hidden)
+            W2[np.random.rand(hidden) < 0.5] *= -1
+            x = sigmoid(X @ W1) @ W2 + z
+        elif sem_type == 'Gaussian Process':
+            gp = GaussianProcessRegressor()
+            x = gp.sample_y(X, random_state=None).flatten() + z
+        else:
+            raise ValueError('unknown sem type')
+        return x
+
+    X = np.zeros([n, d], dtype=float)
+    for j in ordered_vertices:
+        parents = list(G.predecessors(j))
+        X_pa = X[:, parents] if len(parents) > 0 else np.zeros((n, 0))
+        X[:, j] = _simulate_single_equation(X_pa, float(scale_vec[j]))
+    return X
+
+
+def pgmpy_to_adjacency(model) -> Tuple[np.ndarray, List[str]]:
+    """Convert a pgmpy BayesianModel to adjacency matrix and a topological node order."""
+    # Use networkx for a stable topological order
+    G = nx.DiGraph()
+    nodes = list(model.nodes())
+    G.add_nodes_from(nodes)
+    G.add_edges_from(model.edges())
+    topo_nodes = list(nx.topological_sort(G))
+    idx = {n: i for i, n in enumerate(topo_nodes)}
+    d = len(topo_nodes)
+    B = np.zeros((d, d), dtype=int)
+    for u, v in model.edges():
+        B[idx[u], idx[v]] = 1
+    return B, topo_nodes
+
+
+def simulate_nonlinear_sem_from_pgmpy(
+    model,
+    n: int,
+    sem_type: str,
+    noise_scale: Optional[Union[float, List[float]]] = None,
+    as_dataframe: bool = True,
+):
+    """Simulate data from a pgmpy BayesianModel using a nonlinear SEM.
+
+    Returns a pandas DataFrame with columns ordered topologically (or a numpy array if as_dataframe=False).
+    """
+    B, node_order = pgmpy_to_adjacency(model)
+    X = simulate_nonlinear_sem(B, n=n, sem_type=sem_type, noise_scale=noise_scale)
+    if as_dataframe:
+        return pd.DataFrame(X, columns=node_order)
+    return X, node_order
