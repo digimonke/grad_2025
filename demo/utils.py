@@ -179,6 +179,7 @@ def pgmpy_model_to_dot(
     rankdir: str = "LR",
     title: str | None = None,
     highlight_edges: Optional[Iterable[Tuple[str, str]]] = None,
+    highlight_edges_dotted: Optional[Iterable[Tuple[str, str]]] = None,
 ) -> str:
     """Build a Graphviz DOT string from a pgmpy BayesianModel without requiring graphviz/pydot.
 
@@ -197,11 +198,15 @@ def pgmpy_model_to_dot(
     except Exception:
         edges = []
 
-    # Normalize highlight set to strings for easy matching
+    # Normalize highlight sets to strings for easy matching
     hset: Set[Tuple[str, str]] = set()
     if highlight_edges is not None:
         for u, v in highlight_edges:
             hset.add((str(u), str(v)))
+    hset_dotted: Set[Tuple[str, str]] = set()
+    if highlight_edges_dotted is not None:
+        for u, v in highlight_edges_dotted:
+            hset_dotted.add((str(u), str(v)))
 
     lines = _dot_header(rankdir)
     if title:
@@ -217,6 +222,8 @@ def pgmpy_model_to_dot(
         sv = sv_raw.replace("\"", "\\\"")
         if (su_raw, sv_raw) in hset:
             lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
+        elif (su_raw, sv_raw) in hset_dotted:
+            lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", style=dashed, penwidth=2.0];")
         else:
             lines.append(f"  \"{su}\" -> \"{sv}\" [penwidth=1.3];")
 
@@ -227,6 +234,7 @@ def pgmpy_model_to_dot(
 def bnlearn_dag_to_dot(
     dag,
     highlight_edges: Optional[Iterable[Tuple[str, str]]] = None,
+    highlight_edges_dotted: Optional[Iterable[Tuple[str, str]]] = None,
 ) -> str:
     """Accept a bnlearn DAG object and return a DOT string.
 
@@ -243,7 +251,7 @@ def bnlearn_dag_to_dot(
         adj = getattr(dag, "adjmat", None)
 
     if model is not None:
-        return pgmpy_model_to_dot(model, rankdir="LR", highlight_edges=highlight_edges)
+        return pgmpy_model_to_dot(model, rankdir="LR", highlight_edges=highlight_edges, highlight_edges_dotted=highlight_edges_dotted)
 
     if adj is not None:
         try:
@@ -261,11 +269,15 @@ def bnlearn_dag_to_dot(
             for n in nodes:
                 safe = str(n).replace("\"", "\\\"")
                 lines.append(f"  \"{safe}\";")
-            # Normalize highlight set
+            # Normalize highlight sets
             hset: Set[Tuple[str, str]] = set()
             if highlight_edges is not None:
                 for uu, vv in highlight_edges:
                     hset.add((str(uu), str(vv)))
+            hset_dotted: Set[Tuple[str, str]] = set()
+            if highlight_edges_dotted is not None:
+                for uu, vv in highlight_edges_dotted:
+                    hset_dotted.add((str(uu), str(vv)))
 
             for u, v in edges:
                 su_raw, sv_raw = str(u), str(v)
@@ -273,6 +285,8 @@ def bnlearn_dag_to_dot(
                 sv = sv_raw.replace("\"", "\\\"")
                 if (su_raw, sv_raw) in hset:
                     lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
+                elif (su_raw, sv_raw) in hset_dotted:
+                    lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", style=dashed, penwidth=2.0];")
                 else:
                     lines.append(f"  \"{su}\" -> \"{sv}\" [penwidth=1.3];")
             lines.append("}")
@@ -281,6 +295,74 @@ def bnlearn_dag_to_dot(
             pass
 
     return "digraph G { rankdir=LR; }"
+
+
+def diff_pgmpy_models_to_dot(
+    gt_model,
+    curr_model,
+    rankdir: str = "LR",
+    title: str | None = None,
+) -> str:
+    """
+    Build a single DOT graph comparing a current DAG to a ground-truth DAG.
+
+    Styling:
+    - Edges present in both: default style
+    - Edges present only in current (extra): solid red
+    - Edges present only in ground-truth (missing in current): dashed red
+    """
+    try:
+        gt_nodes = set(str(n) for n in gt_model.nodes())
+    except Exception:
+        gt_nodes = set()
+    try:
+        curr_nodes = set(str(n) for n in curr_model.nodes())
+    except Exception:
+        curr_nodes = set()
+
+    nodes = sorted(list(gt_nodes | curr_nodes))
+
+    try:
+        gt_edges = {(str(u), str(v)) for (u, v) in gt_model.edges()}
+    except Exception:
+        gt_edges = set()
+    try:
+        curr_edges = {(str(u), str(v)) for (u, v) in curr_model.edges()}
+    except Exception:
+        curr_edges = set()
+
+    common = curr_edges & gt_edges
+    extra = curr_edges - gt_edges
+    missing = gt_edges - curr_edges
+
+    lines = _dot_header(rankdir)
+    if title:
+        lines.append(f"  labelloc=\"t\"; label=\"{title}\";")
+
+    for n in nodes:
+        safe = str(n).replace("\"", "\\\"")
+        lines.append(f"  \"{safe}\";")
+
+    # Draw common edges first
+    for u, v in sorted(list(common)):
+        su = str(u).replace("\"", "\\\"")
+        sv = str(v).replace("\"", "\\\"")
+        lines.append(f"  \"{su}\" -> \"{sv}\" [penwidth=1.3];")
+
+    # Draw extra edges (present only in current) as solid red
+    for u, v in sorted(list(extra)):
+        su = str(u).replace("\"", "\\\"")
+        sv = str(v).replace("\"", "\\\"")
+        lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
+
+    # Draw missing edges (present only in ground-truth) as dashed red
+    for u, v in sorted(list(missing)):
+        su = str(u).replace("\"", "\\\"")
+        sv = str(v).replace("\"", "\\\"")
+        lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", style=dashed, penwidth=2.0];")
+
+    lines.append("}")
+    return "\n".join(lines)
 
 
 # ----------------------------

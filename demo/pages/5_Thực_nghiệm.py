@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic, adjacency_to_dot, simulate_lingam_from_pgmpy, adjacency_to_edge_set
+from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic, adjacency_to_dot, simulate_lingam_from_pgmpy, adjacency_to_edge_set, diff_pgmpy_models_to_dot
 from algo.algo import linear_causal_discovery, stability_subsampling
 
 import requests
@@ -250,6 +250,115 @@ def edge_stability():
             else:
                 st.info("Mọi cạnh đều vượt ngưỡng π, không còn cạnh đề xuất xoá.")
 
+def apply_edge_removals():
+    st.subheader("Xoá cạnh không vượt ngưỡng π khỏi DAG gây nhiễu")
+
+    if st.session_state.negative_dag is None:
+        st.info("Chưa có DAG gây nhiễu để xoá cạnh.")
+        return
+    if not st.session_state.recommended_removals:
+        st.info("Không có cạnh đề xuất xoá (freq ≤ π). Hãy chạy bước kiểm tra ổn định.")
+        return
+
+    st.caption(f"Số cạnh đề xuất xoá: {len(st.session_state.recommended_removals)}")
+    st.dataframe(pd.DataFrame(st.session_state.recommended_removals, columns=["u", "v"]))
+
+    c1, c2 = st.columns([1, 1])
+    with c1:
+        confirm = st.button("Áp dụng xoá cạnh đề xuất", type="primary")
+    with c2:
+        revert = st.button("Bỏ qua")
+
+    if confirm:
+        # Chỉ xoá những cạnh thực sự tồn tại trong DAG hiện tại
+        existing = set((str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges())
+        to_remove = [(u, v) for (u, v) in st.session_state.recommended_removals if (u, v) in existing]
+        try:
+            # remove in batch
+            st.session_state.negative_dag.remove_edges_from(to_remove)
+        except Exception:
+            # fallback remove one by one for safety
+            for (u, v) in to_remove:
+                try:
+                    st.session_state.negative_dag.remove_edge(u, v)
+                except Exception:
+                    pass
+
+        st.success(f"Đã xoá {len(to_remove)} cạnh khỏi DAG gây nhiễu.")
+
+        # Cập nhật lại candidate_edges dựa trên DAG mới và cấu trúc đã khai thác
+        if st.session_state.W_est is not None and st.session_state.simulated_df is not None:
+            labels = list(st.session_state.simulated_df.columns)
+            discovered = adjacency_to_edge_set(st.session_state.W_est, labels=labels, threshold=float(0.5))
+            perturbed_now = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
+            st.session_state.candidate_edges = sorted(list(perturbed_now - discovered))
+
+        # Hiển thị DAG sau khi xoá
+        st.caption("DAG sau khi xoá cạnh đề xuất:")
+        dot_after = bnlearn_dag_to_dot({"model": st.session_state.negative_dag})
+        st.graphviz_chart(dot_after, use_container_width=True)
+
+
+def show_diff_against_ground_truth():
+    st.subheader("So sánh với đồ thị gốc sau khi xoá cạnh")
+
+    if st.session_state.dag is None:
+        st.info("Chưa có đồ thị gốc để so sánh.")
+        return
+    if st.session_state.negative_dag is None:
+        st.info("Chưa có DAG gây nhiễu để so sánh.")
+        return
+
+    gt_edges = {(str(u), str(v)) for (u, v) in st.session_state.dag.edges()}
+    curr_edges = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
+
+    extra_edges = sorted(list(curr_edges - gt_edges))  # vẫn thừa so với ground truth (chưa xoá hết)
+    missing_edges = sorted(list(gt_edges - curr_edges))  # thiếu so với ground truth (đã xoá nhầm cạnh đúng)
+
+    # Tích hợp với kết quả xoá: thống kê bao nhiêu cạnh đề xuất đã xoá là đúng/nhầm
+    rr = set((str(u), str(v)) for (u, v) in st.session_state.get("recommended_removals", []))
+    removed_correct = sorted(list(rr & set(missing_edges)))  # false positive removals
+    removed_noise = sorted(list(rr - set(missing_edges)))    # đã đề xuất xoá và không còn trong DAG, nhưng không thuộc GT
+
+    if not extra_edges and not missing_edges:
+        st.success("Đồ thị gây nhiễu sau khi xoá đã trùng khớp với đồ thị gốc.")
+        # Hiển thị đồ thị chung để xác nhận
+        dot_ok = bnlearn_dag_to_dot({"model": st.session_state.negative_dag})
+        st.graphviz_chart(dot_ok, use_container_width=True)
+        return
+
+    # Bảng tổng quan
+    st.caption(
+        f"Tổng quan: còn thừa {len(extra_edges)} cạnh; xoá nhầm {len(removed_correct)} cạnh thuộc ground truth; xoá đúng {len(removed_noise)} cạnh nhiễu."
+    )
+
+    # Bảng chi tiết
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("#### Cạnh thừa (so với ground truth)")
+        st.caption(f"Còn lại: {len(extra_edges)} cạnh")
+        if extra_edges:
+            st.dataframe(pd.DataFrame(extra_edges, columns=["u", "v"]))
+        else:
+            st.info("Không còn cạnh thừa.")
+
+    with c2:
+        st.markdown("#### Cạnh thiếu (so với ground truth) — false positive (xoá cạnh đúng)")
+        st.caption(f"Thiếu: {len(missing_edges)} cạnh; Trong đó xoá nhầm theo đề xuất: {len(removed_correct)} cạnh")
+        if missing_edges:
+            st.dataframe(pd.DataFrame(missing_edges, columns=["u", "v"]))
+        else:
+            st.info("Không có cạnh thiếu.")
+
+    # Hiển thị một đồ thị duy nhất thể hiện cả hai loại khác biệt
+    dot_diff = diff_pgmpy_models_to_dot(
+        st.session_state.dag,
+        st.session_state.negative_dag,
+        rankdir="LR",
+        title="Đỏ đặc: cạnh thừa | Đỏ nét đứt: cạnh thiếu",
+    )
+    st.graphviz_chart(dot_diff, use_container_width=True)
+
 st.title("Thực nghiệm")
 st.markdown("""
     Sau đây là một thực nghiệm nhỏ của nghiên cứu dựa trên thuật toán được đề xuất. Nghiên cứu sử dụng đồ thị với mã nguồn mở
@@ -268,3 +377,7 @@ synthetic_data()
 causal_discovery()
 # Sử dụng statbility subsampling và causal inference để kiểm tra độ ổn định của cạnh
 edge_stability()
+# Xoá tập cạnh đề xuất khỏi đồ thị tri thức nhiễu
+apply_edge_removals()
+# show final graph
+show_diff_against_ground_truth()
