@@ -265,7 +265,8 @@ def show_diff_against_ground_truth():
     to_remove = [(u, v) for (u, v) in st.session_state.recommended_removals if (u, v) in existing]
     try:
         # remove in batch
-        st.session_state.negative_dag.remove_edges_from(to_remove)
+        final_graph = st.session_state.negative_dag.copy()
+        final_graph.remove_edges_from(to_remove)
     except Exception:
         # fallback remove one by one for safety
         for (u, v) in to_remove:
@@ -275,7 +276,7 @@ def show_diff_against_ground_truth():
                 pass
     
     gt_edges = {(str(u), str(v)) for (u, v) in st.session_state.dag.edges()}
-    curr_edges = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
+    curr_edges = {(str(u), str(v)) for (u, v) in final_graph.edges()}
 
     extra_edges = sorted(list(curr_edges - gt_edges))  # vẫn thừa so với ground truth (chưa xoá hết)
     missing_edges = sorted(list(gt_edges - curr_edges))  # thiếu so với ground truth (đã xoá nhầm cạnh đúng)
@@ -288,7 +289,7 @@ def show_diff_against_ground_truth():
     if not extra_edges and not missing_edges:
         st.success("Đồ thị gây nhiễu sau khi xoá đã trùng khớp với đồ thị gốc.")
         # Hiển thị đồ thị chung để xác nhận
-        dot_ok = bnlearn_dag_to_dot({"model": st.session_state.negative_dag})
+        dot_ok = bnlearn_dag_to_dot({"model": final_graph})
         st.graphviz_chart(dot_ok, use_container_width=True)
         return
 
@@ -318,7 +319,7 @@ def show_diff_against_ground_truth():
     # Hiển thị một đồ thị duy nhất thể hiện cả hai loại khác biệt
     dot_diff = diff_pgmpy_models_to_dot(
         st.session_state.dag,
-        st.session_state.negative_dag,
+        final_graph,
         rankdir="LR",
         title="Đỏ đặc: cạnh thừa | Đỏ nét đứt: cạnh thiếu",
     )
