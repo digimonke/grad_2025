@@ -57,14 +57,14 @@ def TransD():
     with cols[1]:
         st.latex(r"\mathbf{r}, \mathbf{r}_p \in \mathbb{R}^m")
     
-    st.markdown("Với mỗi bộ ba (h, r, t), ta có một cặp ma trận chuyển đổ để ánh xạ thực thể vào không gian đặc trưng của quan hệ:")
+    st.markdown("Với mỗi bộ ba (h, r, t), ta có một cặp ma trận chuyển đổi để ánh xạ thực thể vào không gian đặc trưng của quan hệ:")
     cols = st.columns(2)
     with cols[0]:
         st.latex(r"\mathbf{M}_{rh} = \mathbf{r}_p \mathbf{h}_p^{\top} + \mathbf{I}^{m \times n}")
     with cols[1]:
         st.latex(r"\mathbf{M}_{rt} = \mathbf{r}_p \mathbf{t}_p^{\top} + \mathbf{I}^{m \times n}")
 
-    st.markdown("Với cặp ma trận chuyển đổi trên, ta có vector của thực thể h và t trong không gian đặc trưng của quan hệ r và hàm tính điểm của TransD như sau")
+    st.markdown("Với cặp ma trận chuyển đổi trên, ta có vector của thực thể h và t trong không gian đặc trưng của quan hệ r và hàm tính điểm của TransD như sau:")
     st.latex(r"f_r(h, t) = {||\mathbf{h}_{\perp} + \mathbf{r} - \mathbf{t}_{\perp}||}^2_2")
     cols = st.columns(2)
     with cols[0]:
@@ -127,7 +127,7 @@ def DisMult():
     )
     st.markdown(
         """
-        Ma trận kề của quan hệ thứ k được xấp xỉ bởi tích của ma trận nhúng thực thể và ma trận đường chéo được xây dựng từ vector đặc trưng cảu quan hệ thứ k:
+    Ma trận kề của quan hệ thứ k được xấp xỉ bởi tích của ma trận nhúng thực thể và ma trận đường chéo được xây dựng từ vector đặc trưng của quan hệ thứ k:
         """
     )
     st.latex(r"\mathbf{X}^{(k)} \approx \mathbf{A}^{\top} \text{diag}(\mathbf{r}_k) \mathbf{A}")
@@ -153,7 +153,7 @@ def ComPlex():
     )
     st.markdown(
         """
-        Ma trận kề của quan hệ thứ k được xấp xỉ bởi tích của ma trận nhúng thực thể và ma trận đường chéo được xây dựng từ vector đặc trưng cảu quan hệ thứ k:
+    Ma trận kề của quan hệ thứ k được xấp xỉ bởi tích của ma trận nhúng thực thể và ma trận đường chéo được xây dựng từ vector đặc trưng của quan hệ thứ k:
         """
     )
     st.latex(r"\mathbf{X}^{(k)} \approx Re(\langle \mathbf{A}, \mathbf{R}^{k}, \overline{\mathbf{A}} \rangle)")
@@ -167,7 +167,7 @@ def ComPlex():
          Việc sử dụng phép liên hợp cho phép mô hình biểu diễn quan hệ không đối xứng (có chiều) được cho thấy thông qua ví dụ sau.
         """
     )
-    st.markdown("Ta có")
+    st.markdown("Ta có:")
     st.latex(r"f_r(h,t) = Re(\sum_{i=1}^{d} a_{h,i} r_i \overline{a_{t,i}})")
     cols = st.columns(3)
     with cols[0]:
@@ -181,7 +181,7 @@ def ComPlex():
     st.latex(r"\implies a_{h,i} r_i \overline{a_{t,i}} = (ac + bd)e - (bc - ad)f + i((ac + bd)f + (bc - ad)e)")
     st.latex(r"\implies Re(a_{h,i} r_i \overline{a_{t,i}}) = (ac + bd)e - (bc - ad)f")
     
-    st.markdown(r"Nếu ta hoán đổi vị trí h và t (đảo chiều quan hệ), ta có")
+    st.markdown(r"Nếu ta hoán đổi vị trí h và t (đảo chiều quan hệ), ta có:")
     st.latex(r"f_r(t,h) = Re(a_{t,i} r_i \overline{a_{h,i}}) = (ac + bd)e + (bc - ad)f")
 
 def SemanticMatchingModels():
@@ -209,20 +209,20 @@ def SemanticMatchingModels():
 def RNN():
     st.divider()
     st.markdown(
-        """ 
+        r""" 
         [**Các mô hình dựa vào mạng neuron hồi quy (RNN)**](https://proceedings.neurips.cc/paper_files/paper/2017/file/0e55666a4ad822e0e34299df3591d979-Paper.pdf) khác với các mô hình tịnh tiến hay song tuyến tính chỉ hoạt động trong phạm vi một bộ ba, các mô hình dựa trên RNN suy luận **theo đường đi (path)** trong KG — tức là chuỗi các quan hệ nối hai thực thể.  
         Một đường đi như:
         """
     )
     st.latex(r"h \xrightarrow{r_1} e_1 \xrightarrow{r_2} e_2 \xrightarrow{r_3} t")
     st.markdown(
-        """
+        r"""
         mang thông tin thành phần (compositional): nếu $h$ là "Obama", $r_1$ là "born\_in", và $r_2$ là "located\_in" thì đường đi có thể gợi ý quan hệ mục tiêu như $(Obama,\ citizen\_of,\ USA)$.  
         Một RNN (GRU/LSTM) có thể học cách các vector quan hệ **kết hợp tuần tự** để dự đoán các quan hệ ngầm như vậy.
         """
     )
 
-    st.markdown(r"RNN xét một đường đi (path) giữ hai thực thể $$\mathbf{h}$$ và $$\mathbf{t}$$")
+    st.markdown(r"RNN xét một đường đi (path) giữa hai thực thể $$\mathbf{h}$$ và $$\mathbf{t}$$:")
     st.latex(r"(r_1, r_2, \ldots, r_L)")
     
     st.markdown(r"Với trạng thái ẩn ở bước số 0 là nhúng của thực thể $$\mathbf{h}$$, RNN cập nhật trạng thái ẩn này với mỗi quan hệ trong đường đi tới $$\mathbf{t}$$:")
@@ -230,7 +230,7 @@ def RNN():
     st.latex(r"\mathbf{h}_i = f_{RNN}(\mathbf{h}_{i-1}, \mathbf{r}_i), \quad i=1,2,\ldots,L")
     st.latex(r"f_{RNN} = \sigma(\mathbf{W}_{rh}\mathbf{r}_t + \mathbf{W}_{hh}\mathbf{h}_{t-1} + \mathbf{b}_h)")
     st.markdown(
-        """
+        r"""
         Trong đó
         - $$W_{rh}$$ là ma trận trọng số kết nối giữa đầu vào quan hệ và trạng thái ẩn
         - $$W_{hh}$$ là ma trận trọng số kết nối giữa trạng thái ẩn trước đó và trạng thái ẩn hiện tại
@@ -240,7 +240,7 @@ def RNN():
     )
     st.caption("Vì RNN có thể gặp vấn đề tiêu biến thông tin (vanishing gradient) với các đường đi dài, các biến thể như LSTM hoặc GRU thường được sử dụng để cải thiện khả năng học các phụ thuộc xa (long-range dependencies).")
 
-    st.markdown("Sau khi xử lý toàn bộ đường đi, trạng thái ẩn cuối cùng $$\mathbf{h}_L$$ sẽ được sử dụng để dự đoán quan hệ giữa $$\mathbf{h}$$ và $$\mathbf{t}$$:")
+    st.markdown(r"Sau khi xử lý toàn bộ đường đi, trạng thái ẩn cuối cùng $$\mathbf{h}_L$$ sẽ được sử dụng để dự đoán quan hệ giữa $$\mathbf{h}$$ và $$\mathbf{t}$$:")
     st.latex(r"f_r(h, t) = \underset{r}{\arg \max} \ \text{sim}(\mathbf{h}_L, \mathbf{r})")
     st.caption(r"Trong đó $$\text{sim}$$ là hàm đo độ tương đồng giữa hai vector.")
 
@@ -249,7 +249,7 @@ def CNN():
     st.markdown(
         """
         [**ConvE (Convolutional Embeddings for Link Prediction)**](https://ojs.aaai.org/index.php/AAAI/article/download/11573/11432) vận dụng mạng neuron tích chập (CNN), thường được sử dụng trong xử lý ảnh, vào tác vụ dự đoán liên kết trong đồ thị tri thức.
-        Thay vì tịnh tiến (TransE) hay tích song tuyến tính (DistMult), ConvE **biến đổi nhúng thành ma trận 2D** và áp dụng các bộ lọc tích chập để trích xuất các mẫu đặc trưng cục bộ (local feature patterns) trong vùng lận cận của thực thể thuộc đồ thị.
+    Thay vì tịnh tiến (TransE) hay tích song tuyến tính (DistMult), ConvE **biến đổi nhúng thành ma trận 2D** và áp dụng các bộ lọc tích chập để trích xuất các mẫu đặc trưng cục bộ (local feature patterns) trong vùng lân cận của thực thể thuộc đồ thị.
         """
     )
 

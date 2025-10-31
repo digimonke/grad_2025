@@ -260,7 +260,7 @@ def render():
             headCoverage(B^{\rightarrow} \rightarrow (x,r,y)) = \frac{support(B^{\rightarrow} \rightarrow (x,r,y))}{\#(x_i,r,y_i)}
         $$
     """)
-    st.write("Ngoài ra, các thuật toán sẽ có các cơ chế đánh gía riêng như độ dài quy tắc, tính mới mẻ hoặc tầm quan trọng của quy tắc.")
+    st.write("Ngoài ra, các thuật toán sẽ có các cơ chế đánh giá riêng như độ dài quy tắc, tính mới mẻ hoặc tầm quan trọng của quy tắc.")
 
     st.divider()
 

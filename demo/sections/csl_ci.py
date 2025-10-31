@@ -8,7 +8,7 @@ def render():
         **Kiểm thử độc lập có điều kiện** (Conditional Independence Test - CI Test) là nhóm phương pháp 
         kiểm định liệu giá trị của hai biến ngẫu nhiên có độc lập khi biết biến thứ ba hay không.
         """)
-    st.markdown(r"Xét biến ngẫu nhiên $$X$$ độc lập có điều kiện với biến ngẫu nhiên $$Y$$ khi biết biến ngẫu nhiên $$Z$$ thuộc phân phối chung $$\mathbb{P}_X$$ nếu và chỉ nếu")
+    st.markdown(r"Xét biến ngẫu nhiên $$X$$ độc lập có điều kiện với biến ngẫu nhiên $$Y$$ khi biết biến ngẫu nhiên $$Z$$ thuộc phân phối chung $$\mathbb{P}_X$$ nếu và chỉ nếu:")
     st.latex(r"X \perp\!\!\!\perp Y \mid Z")
     st.latex(r"\mathbb{P}(X \mid Y, Z) = \mathbb{P}(X \mid Z)")
     st.latex(r"\mathbb{P}(X, Y \mid Z) = \mathbb{P}(X \mid Z) \mathbb{P}(Y \mid Z)")

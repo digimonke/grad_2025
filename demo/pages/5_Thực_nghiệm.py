@@ -108,7 +108,7 @@ def synthetic_data():
     st.markdown("""
         Xem đồ thị tri thức trên như một mạng nhân Bayes biểu diễn chuỗi nhân quả hoàn chỉnh giữa các biến trong dữ liệu.
         Nghiên cứu mô phỏng dữ liệu từ mạng Bayes này bằng các hàm phi tuyến tính với nhiễu ngẫu nhiên theo phân phối chuẩn để tạo ra tập dữ liệu mô phỏng.
-        Dữ liệu được tạo ra tuần theo các giả định sau:
+    Dữ liệu được tạo ra tuân theo các giả định sau:
         - **Giả định hoàn thiện nhân quả (Causal Sufficiency)**: Giả định rằng tất cả các biến trong hệ thống (causal variables) đều đã được quan sát và không có biến ẩn (latent confounding) nằm ngoài tập dữ liệu.
         - **Giả định Markov (Causal Markov Assumption)**: Mỗi biến trong mạng nhân quả là độc lập có điều kiện với các biến không phải là hậu duệ của nó, khi biết giá trị của các biến cha.
     """)
