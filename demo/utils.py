@@ -378,7 +378,7 @@ def pgmpy_to_adjacency(model) -> Tuple[np.ndarray, List[str]]:
 
 
 def simulate_nonlinear_sem_from_pgmpy(
-    model,
+    model: BayesianModel,
     n: int,
     sem_type: str,
     noise_scale: Optional[Union[float, List[float]]] = None,
@@ -394,11 +394,97 @@ def simulate_nonlinear_sem_from_pgmpy(
         return pd.DataFrame(X, columns=node_order)
     return X, node_order
 
+# ----------------------------
+# LiNGAM (linear, non-Gaussian) simulation
+# ----------------------------
+def simulate_lingam(
+    B: np.ndarray,
+    n: int,
+    coef_range: Tuple[float, float] = (0.5, 2.0),
+    noise: str = "laplace",
+    noise_scale: float = 1.0,
+    seed: int | None = None,
+) -> np.ndarray:
+    """Simulate data from a linear, non-Gaussian acyclic model (LiNGAM).
+
+    X_j = sum_{i in Pa(j)} w_{ij} X_i + e_j, where e_j are independent non-Gaussian noises.
+
+    Parameters
+    ----------
+    B : np.ndarray
+        [d, d] binary adj matrix of DAG (1 indicates edge i->j).
+    n : int
+        Number of samples.
+    coef_range : (float, float)
+        Uniform range for absolute edge coefficients. Signs are assigned randomly.
+    noise : str
+        One of {'laplace','exponential','mixture'}.
+    noise_scale : float
+        Scale for noise distribution (interpreted per distribution).
+    seed : int | None
+        Random seed for reproducibility.
+    """
+
+    d = B.shape[0]
+    rng = np.random.default_rng(seed)
+
+    # Build DAG and topological order
+    G = nx.DiGraph()
+    G.add_nodes_from(range(d))
+    srcs, dsts = np.where(B != 0)
+    G.add_edges_from(zip(srcs.tolist(), dsts.tolist()))
+    ordered_vertices = list(nx.topological_sort(G))
+    assert len(ordered_vertices) == d, "Topological sorting failed to include all nodes"
+
+    # Random edge weights with random signs
+    low, high = coef_range
+    W = np.zeros_like(B, dtype=float)
+    for i, j in zip(srcs.tolist(), dsts.tolist()):
+        c = rng.uniform(low, high)
+        s = rng.choice([-1.0, 1.0])
+        W[i, j] = s * c
+
+    def sample_noise(size: int) -> np.ndarray:
+        if noise == "laplace":
+            return rng.laplace(loc=0.0, scale=noise_scale, size=size)
+        elif noise == "exponential":
+            # shift to mean-zero
+            return rng.exponential(scale=noise_scale, size=size) - noise_scale
+        elif noise == "mixture":
+            # mixture of Laplace and Gaussian (still non-Gaussian)
+            return 0.5 * rng.laplace(0.0, noise_scale, size=size) + 0.5 * rng.normal(0.0, noise_scale, size=size)
+        else:
+            raise ValueError("unknown noise distribution for LiNGAM")
+
+    X = np.zeros((n, d), dtype=float)
+    for j in ordered_vertices:
+        parents = list(G.predecessors(j))
+        if parents:
+            X[:, j] = X[:, parents] @ W[parents, j] + sample_noise(n)
+        else:
+            X[:, j] = sample_noise(n)
+    return X
+
+def simulate_lingam_from_pgmpy(
+    model,
+    n: int,
+    coef_range: Tuple[float, float] = (0.5, 2.0),
+    noise: str = "laplace",
+    noise_scale: float = 1.0,
+    seed: int | None = None
+):
+    """Wrapper to simulate LiNGAM data from a pgmpy BayesianModel.
+
+    Returns a pandas DataFrame (topological order) by default.
+    """
+    B, node_order = pgmpy_to_adjacency(model)
+    X = simulate_lingam(B, n=n, coef_range=coef_range, noise=noise, noise_scale=noise_scale, seed=seed)
+    return pd.DataFrame(X, columns=node_order)
+
 
 # ----------------------------
 # DAG perturbation utilities
 # ----------------------------
-
 def add_random_edges_acyclic(
     model,
     n_add: int,
