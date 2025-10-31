@@ -92,9 +92,6 @@ def GeoTranslationalsModels():
 
     TransD()
 
-    with st.expander("Minh hoạ trực quan"):
-        st.image("resources/trans.png")
-
 def Rescal():
     st.divider()
     st.markdown(
