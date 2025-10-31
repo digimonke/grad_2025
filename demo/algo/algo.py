@@ -3,7 +3,6 @@ import pandas as pd
 import torch
 from dagma.nonlinear import DagmaMLP, DagmaNonlinear
 import lingam
-from lingam.utils import make_prior_knowledge
 from collections import defaultdict
 from typing import Callable, Iterable, List, Sequence, Tuple, Optional
 
