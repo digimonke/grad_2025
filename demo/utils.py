@@ -383,7 +383,7 @@ def simulate_nonlinear_sem(
     n : int
         Number of samples.
     sem_type : str
-        'mlp', 'mim', 'gp', or 'gp-add'.
+        'Multilayer Perceptron' or 'Gaussian Process'.
     noise_scale : float | list[float] | None
         Scale parameter(s) of additive Gaussian noises. If None, all ones.
 
