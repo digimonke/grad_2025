@@ -368,11 +368,6 @@ def diff_pgmpy_models_to_dot(
 # ----------------------------
 # Nonlinear SEM simulation
 # ----------------------------
-
-def sigmoid(x: np.ndarray) -> np.ndarray:
-    return 1.0 / (1.0 + np.exp(-x))
-
-
 def simulate_nonlinear_sem(
     B: np.ndarray,
     n: int,
@@ -427,7 +422,7 @@ def simulate_nonlinear_sem(
             W1[np.random.rand(*W1.shape) < 0.5] *= -1
             W2 = np.random.uniform(low=0.5, high=2.0, size=hidden)
             W2[np.random.rand(hidden) < 0.5] *= -1
-            x = sigmoid(X @ W1) @ W2 + z
+            x = _sigmoid(X @ W1) @ W2 + z
         elif sem_type == 'Gaussian Process':
             gp = GaussianProcessRegressor()
             x = gp.sample_y(X, random_state=None).flatten() + z
