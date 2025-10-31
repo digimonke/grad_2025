@@ -32,7 +32,7 @@ def render():
 
     if run:
         # 1) Tạo dữ liệu từ BN thật
-        G_true = utils.get_true_bn()
+        G_true = utils.get_example_bn()
         df = utils.sample_from_true_bn(n_samples=int(n_samples), seed=int(seed))
 
         # 2) Chạy thuật toán học cấu trúc
@@ -53,9 +53,10 @@ def render():
         col_left, col_right = st.columns(2)
         with col_left:
             st.caption("Đồ thị thật")
-            utils.draw_true_bn_graph(G_true, width_px=300)
+            utils.draw_dag(G_true, width_px=300)
         with col_right:
             st.caption(f"Đồ thị học được ({algo})")
-            utils.draw_graph(cg, labels=labels, algo_name=algo, width_px=300)
+            g = cg.G if algo == "PC" else cg['G']
+            utils.draw_graph(g, labels=labels, width_px=300)
     else:
         st.info("Trong phần Ví dụ nhỏ: Chọn tham số và bấm 'Chạy' để tạo dữ liệu và học đồ thị.")
