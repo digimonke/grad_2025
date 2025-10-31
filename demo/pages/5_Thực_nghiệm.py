@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic, adjacency_to_dot, simulate_lingam_from_pgmpy, adjacency_to_edge_set
-from algo.algo import linear_causal_discovery
+from algo.algo import linear_causal_discovery, stability_subsampling
 
 import requests
 import gzip
@@ -15,12 +15,20 @@ if 'negative_dag' not in st.session_state:
 	st.session_state.negative_dag = None
 if 'perturbed_edges' not in st.session_state:
     st.session_state.perturbed_edges = []
+if 'candidate_edges' not in st.session_state:
+    st.session_state.candidate_edges = []
 if 'simulated_df' not in st.session_state:
 	st.session_state.simulated_df = None
 if 'causal_dag' not in st.session_state:
     st.session_state.causal_dag = None
 if 'W_est' not in st.session_state:
     st.session_state.W_est = None
+if 'stability_results' not in st.session_state:
+    st.session_state.stability_results = None
+if 'false_positive_edges' not in st.session_state:
+    st.session_state.false_positive_edges = []
+if 'recommended_removals' not in st.session_state:
+    st.session_state.recommended_removals = []
 
 def original_graph():
     # 1. import example
@@ -154,7 +162,6 @@ def causal_discovery():
                 try:
                     W_est = linear_causal_discovery(st.session_state.simulated_df)
                     st.session_state.W_est = W_est
-
                     
                 except Exception as e:
                     st.error(f"Exception was raised: {e}")
@@ -168,19 +175,87 @@ def causal_discovery():
 
             if st.session_state.negative_dag is not None:
                 st.subheader("So sánh với DAG gây nhiễu")
-                discovered = adjacency_to_edge_set(W_est, labels=default_labels_list, threshold=float(0.5))
+                discovered = adjacency_to_edge_set(st.session_state.W_est, labels=default_labels_list, threshold=float(0.5))
                 perturbed = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
-                negative_edges = sorted(list(perturbed - discovered))
-                st.caption(f"Số cạnh nhiễu (có trong DAG gây nhiễu nhưng không có trong đồ thị khám phá): {len(negative_edges)}")
-                if negative_edges:
-                    st.dataframe(pd.DataFrame(negative_edges, columns=["u", "v"]))
-                    dot_neg = bnlearn_dag_to_dot({"model": st.session_state.negative_dag}, highlight_edges=negative_edges)
+                st.session_state.candidate_edges = sorted(list(perturbed - discovered))
+                st.caption(f"Số cạnh tồn tại trong đồ thị nhiễu nhưng không có trong cấu trúc nhân quả: {len(st.session_state.candidate_edges)}")
+                if st.session_state.candidate_edges:
+                    st.dataframe(pd.DataFrame(st.session_state.candidate_edges, columns=["u", "v"]))
+                    dot_neg = bnlearn_dag_to_dot({"model": st.session_state.negative_dag}, highlight_edges=st.session_state.candidate_edges)
                     st.graphviz_chart(dot_neg, use_container_width=True)
+
+def edge_stability():
+    if st.session_state.W_est is None:
+        return
+
+    st.subheader("Kiểm tra độ ổn định của quan hệ nhân quả")
+    st.markdown(
+        """
+        Tập cạnh được đề xuất ở trên chưa hẳn là tập cạnh nhiễu chính xác. Khai thác cấu trúc nhân quả từ đồ thị là một mảng
+        nghiên cứu đang phát triển với nhiều thách thức, đặc biệt khi tập dữ liệu bị ảnh hưởng bởi nhiễu, ảnh hưởng của các quan hệ
+        trừ khử lẫn nhau, và các yếu tố khác. Do đó, ta cần kiểm tra độ ổn định của các cạnh được phát hiện nhằm đánh giá độ tin cậy của chúng.
+        Phương pháp stability subsampling được sử dụng để đánh giá độ ổn định của các cạnh trong đồ thị nhân quả được khai thác.
+        """
+    )
+    with st.form(key="stability_form"):
+        c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
+        with c1:
+            subsample_frac = st.slider("Tỉ lệ mẫu mỗi lần", min_value=0.4, max_value=0.75, value=0.65, step=0.01)
+        with c2:
+            B = st.number_input("Số lần lặp (B)", min_value=10, max_value=50, value=20, step=1)
+        with c3:
+            pi_threshold = st.slider("Ngưỡng π", min_value=0.1, max_value=0.9, value=0.75, step=0.05)
+        with c4:
+            base_seed = st.number_input("Seed", min_value=0, max_value=9999, value=7, step=1)
+        run_btn = st.form_submit_button("Chạy stability subsampling")
+
+    if run_btn:
+        if not st.session_state.candidate_edges:
+            st.info("Không có candidate_edges để kiểm tra. Hãy chạy các bước trước (gây nhiễu, tạo dữ liệu, khai thác cấu trúc).")
+            return
+
+        with st.spinner("Đang chạy stability subsampling..."):
+            df_results, false_pos, keep_remove = stability_subsampling(
+                st.session_state.simulated_df,
+                st.session_state.candidate_edges,
+                B=int(B),
+                subsample_frac=float(subsample_frac),
+                seed=int(base_seed),
+                pi_threshold=float(pi_threshold),
+                discovery_fn=linear_causal_discovery,
+            )
+
+        st.session_state.stability_results = df_results
+        st.session_state.false_positive_edges = false_pos
+        st.session_state.recommended_removals = keep_remove
+
+    # Hiển thị kết quả nếu có
+    if st.session_state.stability_results is not None:
+        st.markdown("### Kết quả tần suất xuất hiện cạnh trong các mẫu")
+        st.dataframe(st.session_state.stability_results, use_container_width=True)
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("#### Cạnh xuất hiện thường xuyên (freq > π) — false positive trong đề xuất")
+            st.caption("Các cạnh này nên loại khỏi danh sách cạnh nhiễu.")
+            if st.session_state.false_positive_edges:
+                st.dataframe(pd.DataFrame(st.session_state.false_positive_edges, columns=["u", "v"]))
+            else:
+                st.info("Không có cạnh nào vượt ngưỡng π.")
+
+        with c2:
+            st.markdown("#### Cạnh ít xuất hiện (freq ≤ π) — đề xuất xoá")
+            if st.session_state.recommended_removals:
+                st.dataframe(pd.DataFrame(st.session_state.recommended_removals, columns=["u", "v"]))
+            else:
+                st.info("Mọi cạnh đều vượt ngưỡng π, không còn cạnh đề xuất xoá.")
 
 st.title("Thực nghiệm")
 st.markdown("""
     Sau đây là một thực nghiệm nhỏ của nghiên cứu dựa trên thuật toán được đề xuất. Nghiên cứu sử dụng đồ thị với mã nguồn mở
 	từ thư viện bnlearn với 27 nút và 52 cạnh, mô tả chuỗi nhân quả giữa các thực thể trong lĩnh vực bảo hiểm tài sản và tai nạn.
+    Mục tiêu của thực nghiệm là phát hiện và đề xuất một tập cạnh nhiễu nhằm xoá khỏi đồ thị tri thức, cải thiện chất lượng tri thức
+    thuộc đồ thị.
 """)
 
 # Bắt đầu với một đồ thị tri thức
@@ -191,3 +266,5 @@ perturbed_graph()
 synthetic_data()
 # Khôi phục cấu trúc nhân quả từ dữ liệu mô phỏng
 causal_discovery()
+# Sử dụng statbility subsampling và causal inference để kiểm tra độ ổn định của cạnh
+edge_stability()
