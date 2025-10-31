@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic, adjacency_to_dot, simulate_lingam_from_pgmpy
+from utils import bnlearn_dag_to_dot, simulate_nonlinear_sem_from_pgmpy, add_random_edges_acyclic, adjacency_to_dot, simulate_lingam_from_pgmpy, adjacency_to_edge_set
 from algo.algo import linear_causal_discovery
 
 import requests
@@ -13,8 +13,14 @@ if 'dag' not in st.session_state:
 	st.session_state.dag = None
 if 'negative_dag' not in st.session_state:
 	st.session_state.negative_dag = None
+if 'perturbed_edges' not in st.session_state:
+    st.session_state.perturbed_edges = []
 if 'simulated_df' not in st.session_state:
 	st.session_state.simulated_df = None
+if 'causal_dag' not in st.session_state:
+    st.session_state.causal_dag = None
+if 'W_est' not in st.session_state:
+    st.session_state.W_est = None
 
 def original_graph():
     # 1. import example
@@ -63,25 +69,27 @@ def original_graph():
 def perturbed_graph():
     # 2. Perturb structure: add random edges without cycles
     st.subheader("Gây nhiễu cấu trúc")
-    if st.session_state.dag is not None:
-        st.markdown("""
+    st.markdown("""
         Nhằm mô phỏng lại những cạnh nhiễu thường thấy trong đồ thị tri thức thực tế, ta tiến hành thêm ngẫu nhiên một số cạnh vào DAG hiện tại
         trong khi vẫn giữ tính chất không chu trình (acyclic). Nhiệm vụ của thuật toán là phát hiện và loại bỏ các cạnh nhiễu này.
         """)
+    
+    if st.session_state.dag is not None:
         c1, c2 = st.columns([1, 1])
         with c1:
             k_add = st.number_input("Số cạnh nhiễu", min_value=3, max_value=26, value=12, step=1)
         with c2:
-            seed = st.number_input("Random seed", min_value=0, max_value=10, value=1, step=1)
+            seed = st.number_input("Random seed", min_value=0, max_value=10, value=3, step=1)
 
         do_perturb = st.button("Thêm nhiễu")
         if do_perturb:
             with st.spinner("Đang thêm cạnh ngẫu nhiên và kiểm tra chu trình..."):
-                new_model, added_edges = add_random_edges_acyclic(st.session_state.dag, n_add=int(k_add), seed=int(seed))
-                st.caption("DAG sau khi thêm cạnh (cạnh mới tô đỏ):")
-                dot_new = bnlearn_dag_to_dot({"model": new_model}, highlight_edges=added_edges)
-                st.graphviz_chart(dot_new, use_container_width=True)
-                st.session_state.negative_dag = new_model
+                st.session_state.negative_dag, st.session_state.perturbed_edges = add_random_edges_acyclic(st.session_state.dag, n_add=int(k_add), seed=int(seed))
+
+    if st.session_state.negative_dag is not None:
+        st.caption("DAG sau khi thêm quan hệ nhiễu (cạnh mới tô đỏ):")
+        dot_new = bnlearn_dag_to_dot({"model": st.session_state.negative_dag}, highlight_edges=st.session_state.perturbed_edges)
+        st.graphviz_chart(dot_new, use_container_width=True)
 
 def synthetic_data():
     # 3. dữ liệu mô phỏng
@@ -100,15 +108,15 @@ def synthetic_data():
             with c1:
                 sem_choice = st.selectbox(
                     "Cấu tạo hàm (functional form)",
+                    # "Multilayer Perceptron",
+                    # "Gaussian Process",
                     options=[
-                        "Multilayer Perceptron",
-                        "Gaussian Process",
                         "LiNGAM (linear, non-Gaussian)",
                     ],
                     index=0,
                 )
             with c2:
-                n_samples = st.number_input("Số mẫu", min_value=1000, max_value=20000, value=5000, step=100)
+                n_samples = st.number_input("Số mẫu", min_value=250, max_value=750, value=500, step=50)
             with c3:
                 noise_scale = st.number_input("Độ lệch nhiễu (σ)", min_value=0.0, value=1.0, step=0.1)
 
@@ -133,30 +141,41 @@ def synthetic_data():
                 except Exception as e:
                     st.error(f"Không thể mô phỏng dữ liệu: {e}")
 
-        df_sim = st.session_state.simulated_df
-        if df_sim is not None:
-            st.dataframe(df_sim.head(20), use_container_width=True)
-
-    else:
-        st.info("Chưa có DAG để mô phỏng. Hãy tải DAG trước.")
+    if st.session_state.simulated_df is not None:
+        st.dataframe(st.session_state.simulated_df.head(20), use_container_width=True)
 
 def causal_discovery():
     # 4. Run causal discovery to try to recover true structure from data
     st.subheader("Khai thác cấu trúc nhân quả từ dữ liệu")
     if st.session_state.simulated_df is not None:
-        with st.spinner("Đang khai thác cấu trúc nhân quả..."):
-            try:
-                W_est = linear_causal_discovery(st.session_state.simulated_df)
+        run_discovery = st.button("Khai thác cấu trúc nhân quả")
+        if run_discovery:
+            with st.spinner("Đang khai thác cấu trúc nhân quả..."):
+                try:
+                    W_est = linear_causal_discovery(st.session_state.simulated_df)
+                    st.session_state.W_est = W_est
 
-                st.session_state.W_est = W_est
-                # node names from simulated data
-                df_cols = list(st.session_state.simulated_df.columns)
-                default_labels_list = df_cols
-                dot_W = adjacency_to_dot(W_est, labels=default_labels_list, rankdir='LR')
-                st.graphviz_chart(dot_W, use_container_width=True)
-                st.success("Khai thác cấu trúc nhân quả thành công.")
-            except Exception as e:
-                st.error(f"Không thể khai thác cấu trúc nhân quả: {e}")
+                    
+                except Exception as e:
+                    st.error(f"Exception was raised: {e}")
+        
+        if st.session_state.W_est is not None:
+            # node names from simulated data
+            default_labels_list = list(st.session_state.simulated_df.columns)
+            dot_W = adjacency_to_dot(st.session_state.W_est, labels=default_labels_list, rankdir='LR')
+            st.graphviz_chart(dot_W, use_container_width=True)
+            st.success("Khai thác cấu trúc nhân quả thành công.")
+
+            if st.session_state.negative_dag is not None:
+                st.subheader("So sánh với DAG gây nhiễu")
+                discovered = adjacency_to_edge_set(W_est, labels=default_labels_list, threshold=float(0.5))
+                perturbed = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
+                negative_edges = sorted(list(perturbed - discovered))
+                st.caption(f"Số cạnh nhiễu (có trong DAG gây nhiễu nhưng không có trong đồ thị khám phá): {len(negative_edges)}")
+                if negative_edges:
+                    st.dataframe(pd.DataFrame(negative_edges, columns=["u", "v"]))
+                    dot_neg = bnlearn_dag_to_dot({"model": st.session_state.negative_dag}, highlight_edges=negative_edges)
+                    st.graphviz_chart(dot_neg, use_container_width=True)
 
 st.title("Thực nghiệm")
 st.markdown("""
@@ -164,7 +183,11 @@ st.markdown("""
 	từ thư viện bnlearn với 27 nút và 52 cạnh, mô tả chuỗi nhân quả giữa các thực thể trong lĩnh vực bảo hiểm tài sản và tai nạn.
 """)
 
+# Bắt đầu với một đồ thị tri thức
 original_graph()
+# Gây nhiễu đồ thị tri thức
 perturbed_graph()
+# Tạo dữ liệu mô phỏng cho đồ thị tri thức thật
 synthetic_data()
+# Khôi phục cấu trúc nhân quả từ dữ liệu mô phỏng
 causal_discovery()

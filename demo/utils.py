@@ -615,3 +615,49 @@ def adjacency_to_dot(
 
     lines.append("}")
     return "\n".join(lines)
+
+
+def adjacency_to_edge_set(
+    W: np.ndarray,
+    labels: Optional[List[str]] = None,
+    threshold: Optional[float] = None,
+    tol: float = 1e-8,
+) -> Set[Tuple[str, str]]:
+    """Return a set of directed edges (u, v) from an adjacency/weight matrix.
+
+    - Uses same threshold logic as adjacency_to_dot.
+    - If both directions i<->j are present above threshold, the stronger direction is chosen;
+      if nearly equal within tol, returns neither direction to avoid ambiguity.
+    """
+    if W.ndim != 2 or W.shape[0] != W.shape[1]:
+        raise ValueError("W must be a square matrix")
+    d = W.shape[0]
+    if labels is None:
+        labels = [f"X{i+1}" for i in range(d)]
+    if len(labels) != d:
+        raise ValueError("labels length must match W dimension")
+
+    def nonzero(x: float) -> bool:
+        thr = tol if threshold is None else float(threshold)
+        return abs(float(x)) > thr
+
+    edges: Set[Tuple[str, str]] = set()
+    for i in range(d):
+        for j in range(i + 1, d):
+            a = float(W[i, j])
+            b = float(W[j, i])
+            ai = nonzero(a)
+            bj = nonzero(b)
+            if ai and bj:
+                if abs(a) > abs(b) + tol:
+                    edges.add((str(labels[i]), str(labels[j])))
+                elif abs(b) > abs(a) + tol:
+                    edges.add((str(labels[j]), str(labels[i])))
+                else:
+                    # ambiguous; skip adding either direction
+                    pass
+            elif ai:
+                edges.add((str(labels[i]), str(labels[j])))
+            elif bj:
+                edges.add((str(labels[j]), str(labels[i])))
+    return edges
