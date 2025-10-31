@@ -321,7 +321,7 @@ def render():
     st.header("Phương pháp dựa trên học máy")
     st.info("""
         **Phương pháp học máy (Machine Learning-based)** sử dụng các thuật toán học máy nhằm học được bộ nhúng 
-        đồ thị tối ưu chứa đựng biểu diễn của các thực thể và quan hệ trong đồ thị dưới dạng mã hoá và dùng chúng để dự đoán các thành phần còn thiếu. 
+        đồ thị tối ưu chứa đựng biểu diễn của các thực thể và quan hệ trong đồ thị dưới dạng mã hoá và dùng chúng để dự đoán các thành phần thiếu hoặc thừa. 
         Trong quá trình huấn luyện, các mô hình này tối ưu hoá bộ nhúng của thực thể và quan hệ dựa trên một hàm tính điểm bộ ba (h,r,t) 
         sao cho các bộ ba đúng có điểm số cao hơn các bộ ba sai.
     """)

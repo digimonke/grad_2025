@@ -109,7 +109,7 @@ def render():
     with col2:
         st.latex("P_{\epsilon}")
 
-    st.markdown("Tập hàm cấu trúc với giả định giá trị của biến $$X_i$$ được xác định bởi một hàm số của các biến cha và biến ngoại sinh tương ứng với nó")
+    st.markdown("Hàm cấu trúc với giả định giá trị của biến $$X_i$$ được xác định bởi một hàm số của các biến cha và biến ngoại sinh tương ứng với nó. Đa phần các thuật toán đều hoạt động dựa trên giả định về hàm cấu trúc của SCM như tuyến tính hay phi tuyến tính.")
     col1, col2 = st.columns(2)
     with col1:
         st.latex("{\{f_i\}}^p_{i=1}")

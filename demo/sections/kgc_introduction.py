@@ -1,9 +1,9 @@
 import streamlit as st
 
 def render():
-    st.info("**Tác vụ hoàn thiện đồ thị tri thức (Knowledge Graph Completion)** với mục tiêu bổ sung các thực thể, quan hệ hoặc thuộc tính còn thiếu trong đồ thị hiện có, làm giàu kho tri thức của đồ thị.")
+    st.info("**Tác vụ hoàn thiện đồ thị tri thức (Knowledge Graph Completion)** với mục tiêu bổ sung/loại bỏ các thực thể, quan hệ hoặc thuộc tính kém chất lượng trong đồ thị hiện có, cải thiện tri thức được đồ thị lưu trữ.")
     st.write("""
-            Về mặt tác vụ, KGC nhắm đến dự đoán thành phần còn thiếu trong một bộ ba (chủ thể, quan hệ, đối tượng) dựa trên các thành phần đã biết:
+            Về mặt tác vụ, KGC nhắm đến dự đoán thành phần còn thiếu/thừa trong một bộ ba (chủ thể, quan hệ, đối tượng) dựa trên các thành phần đã biết:
             - **Dự đoán quan hệ (Relation Prediction)**: xác định **quan hệ** giữa hai thực thể đã biết.
             - **Dự đoán thực thể (Entity Prediction)**: xác định **chủ thể** hoặc **đối tượng** còn thiếu trong bộ ba.
             """)

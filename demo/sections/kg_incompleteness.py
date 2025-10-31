@@ -48,9 +48,9 @@ def render():
     )
 
     st.divider()
-    st.subheader("Đo lường độ đầy đủ (live, DBpedia)")
+    st.subheader("Ví dụ")
     st.write(
-        "Chọn một lớp (class) và một thuộc tính (property) để ước lượng tỉ lệ thực thể có thuộc tính đó trên DBpedia."
+        "Theo thường thức, mỗi quốc gia nên có thủ đô. Tuy nhiên, trong DBpedia, nhiều quốc gia không có thuộc tính `dbo:capital`, thể hiện tính không đầy đủ của đồ thị tri thức."
     )
 
     DBPEDIA_SPARQL_ENDPOINT = "https://dbpedia.org/sparql"

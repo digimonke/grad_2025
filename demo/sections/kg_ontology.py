@@ -38,7 +38,7 @@ def render():
         Một số điểm chính:
         - Dùng @prefix để rút gọn IRI, mỗi bộ ba kết thúc bằng dấu chấm.
         - Dấu chấm phẩy (;) tái sử dụng chủ ngữ, dấu phẩy (,) tái sử dụng vị ngữ.
-        - Hỗ trợ literal có ngôn ngữ/kiểu dữ liệu, blank node và collection.
+        - Hỗ trợ đa ngôn ngữ và kiểu dữ liệu như nút rỗng và tập hợp.
         """
     )
     st.code(
