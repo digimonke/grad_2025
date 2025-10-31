@@ -34,3 +34,21 @@ Tip: You can also use the VS Code task "Run Streamlit app".
 ## Common issues
 - If you see runtime errors about missing packages, ensure your virtualenv is activated and reinstall with `pip install -r requirements.txt`.
 - Some packages may compile native extensions on first install. Xcode Command Line Tools might be required on macOS: `xcode-select --install`.
+
+## Docker
+
+Build the image (includes Graphviz for `dot`):
+
+```bash
+docker build -t thesis-app .
+```
+
+Run the container locally on port 8502:
+
+```bash
+docker run --rm -p 8502:8502 thesis-app
+```
+
+Notes:
+- The container installs system Graphviz so `st.graphviz_chart` and pydot work without extra setup.
+- The app binds to `0.0.0.0` and honors `$PORT` (defaults to 8502). For platforms like Cloud Run/Render, set `PORT` via environment.

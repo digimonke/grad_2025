@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS/editor
+.DS_Store
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Node (if any)
+node_modules/
+
+# Build artifacts
+build/
+dist/
