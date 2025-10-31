@@ -4,7 +4,7 @@ import torch
 from dagma.nonlinear import DagmaMLP, DagmaNonlinear
 import lingam
 from collections import defaultdict
-from typing import Callable, Iterable, List, Sequence, Tuple, Optional
+from typing import Callable, List, Sequence, Tuple, Optional
 
 # Local utilities
 from utils import adjacency_to_edge_set
