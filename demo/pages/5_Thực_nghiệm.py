@@ -87,7 +87,7 @@ def perturbed_graph():
         with c1:
             k_add = st.number_input("Số cạnh nhiễu", min_value=3, max_value=26, value=12, step=1)
         with c2:
-            seed = st.number_input("Random seed", min_value=0, max_value=10, value=3, step=1)
+            seed = st.number_input("Random seed", min_value=0, max_value=10, value=5, step=1)
 
         do_perturb = st.button("Thêm nhiễu")
         if do_perturb:
@@ -100,6 +100,9 @@ def perturbed_graph():
         st.graphviz_chart(dot_new, use_container_width=True)
 
 def synthetic_data():
+    if st.session_state.dag is None or st.session_state.negative_dag is None:
+        return
+    
     # 3. dữ liệu mô phỏng
     st.subheader("Dữ liệu mô phỏng từ DAG")
     st.markdown("""
@@ -110,79 +113,80 @@ def synthetic_data():
         - **Giả định Markov (Causal Markov Assumption)**: Mỗi biến trong mạng nhân quả là độc lập có điều kiện với các biến không phải là hậu duệ của nó, khi biết giá trị của các biến cha.
     """)
 
-    if st.session_state.dag is not None:
-        with st.form(key="simulate_form"):
-            c1, c2, c3 = st.columns([1.6, 1, 1])
-            with c1:
-                sem_choice = st.selectbox(
-                    "Cấu tạo hàm (functional form)",
-                    # "Multilayer Perceptron",
-                    # "Gaussian Process",
-                    options=[
-                        "LiNGAM (linear, non-Gaussian)",
-                    ],
-                    index=0,
-                )
-            with c2:
-                n_samples = st.number_input("Số mẫu", min_value=250, max_value=750, value=500, step=50)
-            with c3:
-                noise_scale = st.number_input("Độ lệch nhiễu (σ)", min_value=0.0, value=1.0, step=0.1)
+    with st.form(key="simulate_form"):
+        c1, c2, c3 = st.columns([1.6, 1, 1])
+        with c1:
+            sem_choice = st.selectbox(
+                "Cấu tạo hàm (functional form)",
+                # "Multilayer Perceptron",
+                # "Gaussian Process",
+                options=[
+                    "LiNGAM (linear, non-Gaussian)",
+                ],
+                index=0,
+            )
+        with c2:
+            n_samples = st.number_input("Số mẫu", min_value=250, max_value=750, value=300, step=50)
+        with c3:
+            noise_scale = st.number_input("Độ lệch nhiễu (σ)", min_value=0.0, value=1.2, step=0.1)
 
-            submitted = st.form_submit_button("Tạo dữ liệu")
+        submitted = st.form_submit_button("Tạo dữ liệu")
 
-        if submitted:
-            with st.spinner("Đang mô phỏng dữ liệu..."):
-                try:
-                    if sem_choice.startswith("LiNGAM"):
-                        df_sim = simulate_lingam_from_pgmpy(
-                            st.session_state.dag,
-                            n=int(n_samples),
-                            noise="laplace",
-                            noise_scale=float(noise_scale),
-                        )
-                    else:
-                        df_sim = simulate_nonlinear_sem_from_pgmpy(
-                            st.session_state.dag, n=int(n_samples), sem_type=sem_choice, noise_scale=float(noise_scale)
-                        )
-                    st.session_state.simulated_df = df_sim
-                    st.success(f"Đã tạo dữ liệu: {df_sim.shape[0]}x{df_sim.shape[1]}. 20 dòng đầu tiên hiển thị bên dưới.")
-                except Exception as e:
-                    st.error(f"Không thể mô phỏng dữ liệu: {e}")
+    if submitted:
+        with st.spinner("Đang mô phỏng dữ liệu..."):
+            try:
+                if sem_choice.startswith("LiNGAM"):
+                    df_sim = simulate_lingam_from_pgmpy(
+                        st.session_state.dag,
+                        n=int(n_samples),
+                        noise="laplace",
+                        noise_scale=float(noise_scale),
+                    )
+                else:
+                    df_sim = simulate_nonlinear_sem_from_pgmpy(
+                        st.session_state.dag, n=int(n_samples), sem_type=sem_choice, noise_scale=float(noise_scale)
+                    )
+                st.session_state.simulated_df = df_sim
+                st.success(f"Đã tạo dữ liệu: {df_sim.shape[0]}x{df_sim.shape[1]}. 20 dòng đầu tiên hiển thị bên dưới.")
+            except Exception as e:
+                st.error(f"Không thể mô phỏng dữ liệu: {e}")
 
     if st.session_state.simulated_df is not None:
         st.dataframe(st.session_state.simulated_df.head(20), use_container_width=True)
 
 def causal_discovery():
+    if st.session_state.simulated_df is None:
+        return
+
     # 4. Run causal discovery to try to recover true structure from data
     st.subheader("Khai thác cấu trúc nhân quả từ dữ liệu")
-    if st.session_state.simulated_df is not None:
-        run_discovery = st.button("Khai thác cấu trúc nhân quả")
-        if run_discovery:
-            with st.spinner("Đang khai thác cấu trúc nhân quả..."):
-                try:
-                    W_est = linear_causal_discovery(st.session_state.simulated_df)
-                    st.session_state.W_est = W_est
-                    
-                except Exception as e:
-                    st.error(f"Exception was raised: {e}")
-        
-        if st.session_state.W_est is not None:
-            # node names from simulated data
-            default_labels_list = list(st.session_state.simulated_df.columns)
-            dot_W = adjacency_to_dot(st.session_state.W_est, labels=default_labels_list, rankdir='LR')
-            st.graphviz_chart(dot_W, use_container_width=True)
-            st.success("Khai thác cấu trúc nhân quả thành công.")
+    run_discovery = st.button("Khai thác cấu trúc nhân quả")
+    if run_discovery:
+        with st.spinner("Đang khai thác cấu trúc nhân quả..."):
+            try:
+                W_est = linear_causal_discovery(st.session_state.simulated_df)
+                st.session_state.W_est = W_est
+                
+            except Exception as e:
+                st.error(f"Exception was raised: {e}")
+    
+    if st.session_state.W_est is not None:
+        # node names from simulated data
+        default_labels_list = list(st.session_state.simulated_df.columns)
+        dot_W = adjacency_to_dot(st.session_state.W_est, labels=default_labels_list, rankdir='LR')
+        st.graphviz_chart(dot_W, use_container_width=True)
+        st.success("Khai thác cấu trúc nhân quả thành công.")
 
-            if st.session_state.negative_dag is not None:
-                st.subheader("So sánh với DAG gây nhiễu")
-                discovered = adjacency_to_edge_set(st.session_state.W_est, labels=default_labels_list, threshold=float(0.5))
-                perturbed = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
-                st.session_state.candidate_edges = sorted(list(perturbed - discovered))
-                st.caption(f"Số cạnh tồn tại trong đồ thị nhiễu nhưng không có trong cấu trúc nhân quả: {len(st.session_state.candidate_edges)}")
-                if st.session_state.candidate_edges:
-                    st.dataframe(pd.DataFrame(st.session_state.candidate_edges, columns=["u", "v"]))
-                    dot_neg = bnlearn_dag_to_dot({"model": st.session_state.negative_dag}, highlight_edges=st.session_state.candidate_edges)
-                    st.graphviz_chart(dot_neg, use_container_width=True)
+        if st.session_state.negative_dag is not None:
+            st.subheader("So sánh với DAG gây nhiễu")
+            discovered = adjacency_to_edge_set(st.session_state.W_est, labels=default_labels_list, threshold=float(0.5))
+            perturbed = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
+            st.session_state.candidate_edges = sorted(list(perturbed - discovered))
+            st.caption(f"Số cạnh tồn tại trong đồ thị nhiễu nhưng không có trong cấu trúc nhân quả: {len(st.session_state.candidate_edges)}")
+            if st.session_state.candidate_edges:
+                st.dataframe(pd.DataFrame(st.session_state.candidate_edges, columns=["u", "v"]))
+                dot_neg = bnlearn_dag_to_dot({"model": st.session_state.negative_dag}, highlight_edges=st.session_state.candidate_edges)
+                st.graphviz_chart(dot_neg, use_container_width=True)
 
 def edge_stability():
     if st.session_state.W_est is None:
@@ -200,9 +204,9 @@ def edge_stability():
     with st.form(key="stability_form"):
         c1, c2, c3, c4 = st.columns([1, 1, 1, 1])
         with c1:
-            subsample_frac = st.slider("Tỉ lệ mẫu mỗi lần", min_value=0.4, max_value=0.75, value=0.65, step=0.01)
+            subsample_frac = st.slider("Tỉ lệ lấy mẫu", min_value=0.4, max_value=0.75, value=0.65, step=0.01)
         with c2:
-            B = st.number_input("Số lần lặp (B)", min_value=10, max_value=50, value=20, step=1)
+            B = st.number_input("Số lần lặp", min_value=10, max_value=50, value=20, step=1)
         with c3:
             pi_threshold = st.slider("Ngưỡng π", min_value=0.1, max_value=0.9, value=0.75, step=0.05)
         with c4:
@@ -250,65 +254,26 @@ def edge_stability():
             else:
                 st.info("Mọi cạnh đều vượt ngưỡng π, không còn cạnh đề xuất xoá.")
 
-def apply_edge_removals():
-    st.subheader("Xoá cạnh không vượt ngưỡng π khỏi DAG gây nhiễu")
-
-    if st.session_state.negative_dag is None:
-        st.info("Chưa có DAG gây nhiễu để xoá cạnh.")
-        return
-    if not st.session_state.recommended_removals:
-        st.info("Không có cạnh đề xuất xoá (freq ≤ π). Hãy chạy bước kiểm tra ổn định.")
-        return
-
-    st.caption(f"Số cạnh đề xuất xoá: {len(st.session_state.recommended_removals)}")
-    st.dataframe(pd.DataFrame(st.session_state.recommended_removals, columns=["u", "v"]))
-
-    c1, c2 = st.columns([1, 1])
-    with c1:
-        confirm = st.button("Áp dụng xoá cạnh đề xuất", type="primary")
-    with c2:
-        revert = st.button("Bỏ qua")
-
-    if confirm:
-        # Chỉ xoá những cạnh thực sự tồn tại trong DAG hiện tại
-        existing = set((str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges())
-        to_remove = [(u, v) for (u, v) in st.session_state.recommended_removals if (u, v) in existing]
-        try:
-            # remove in batch
-            st.session_state.negative_dag.remove_edges_from(to_remove)
-        except Exception:
-            # fallback remove one by one for safety
-            for (u, v) in to_remove:
-                try:
-                    st.session_state.negative_dag.remove_edge(u, v)
-                except Exception:
-                    pass
-
-        st.success(f"Đã xoá {len(to_remove)} cạnh khỏi DAG gây nhiễu.")
-
-        # Cập nhật lại candidate_edges dựa trên DAG mới và cấu trúc đã khai thác
-        if st.session_state.W_est is not None and st.session_state.simulated_df is not None:
-            labels = list(st.session_state.simulated_df.columns)
-            discovered = adjacency_to_edge_set(st.session_state.W_est, labels=labels, threshold=float(0.5))
-            perturbed_now = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
-            st.session_state.candidate_edges = sorted(list(perturbed_now - discovered))
-
-        # Hiển thị DAG sau khi xoá
-        st.caption("DAG sau khi xoá cạnh đề xuất:")
-        dot_after = bnlearn_dag_to_dot({"model": st.session_state.negative_dag})
-        st.graphviz_chart(dot_after, use_container_width=True)
-
-
 def show_diff_against_ground_truth():
+    if st.session_state.stability_results is None:
+        return
+
     st.subheader("So sánh với đồ thị gốc sau khi xoá cạnh")
 
-    if st.session_state.dag is None:
-        st.info("Chưa có đồ thị gốc để so sánh.")
-        return
-    if st.session_state.negative_dag is None:
-        st.info("Chưa có DAG gây nhiễu để so sánh.")
-        return
-
+    # Chỉ xoá những cạnh thực sự tồn tại trong DAG hiện tại
+    existing = set((str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges())
+    to_remove = [(u, v) for (u, v) in st.session_state.recommended_removals if (u, v) in existing]
+    try:
+        # remove in batch
+        st.session_state.negative_dag.remove_edges_from(to_remove)
+    except Exception:
+        # fallback remove one by one for safety
+        for (u, v) in to_remove:
+            try:
+                st.session_state.negative_dag.remove_edge(u, v)
+            except Exception:
+                pass
+    
     gt_edges = {(str(u), str(v)) for (u, v) in st.session_state.dag.edges()}
     curr_edges = {(str(u), str(v)) for (u, v) in st.session_state.negative_dag.edges()}
 
@@ -377,7 +342,5 @@ synthetic_data()
 causal_discovery()
 # Sử dụng statbility subsampling và causal inference để kiểm tra độ ổn định của cạnh
 edge_stability()
-# Xoá tập cạnh đề xuất khỏi đồ thị tri thức nhiễu
-apply_edge_removals()
 # show final graph
 show_diff_against_ground_truth()
