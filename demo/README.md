@@ -18,6 +18,27 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+2.1) Install Graphviz system binary (required for crisp DAG rendering)
+
+Graph drawing via pydot/graphviz needs the `dot` executable. Install it with Homebrew:
+
+```bash
+brew install graphviz
+```
+
+If you're on Apple Silicon and `dot` isn't found after install, ensure Homebrew is on your PATH:
+
+```bash
+echo 'export PATH="/opt/homebrew/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+Verify:
+
+```bash
+dot -V
+```
+
 3) Run the Streamlit app
 
 ```bash
@@ -34,6 +55,7 @@ Tip: You can also use the VS Code task "Run Streamlit app".
 ## Common issues
 - If you see runtime errors about missing packages, ensure your virtualenv is activated and reinstall with `pip install -r requirements.txt`.
 - Some packages may compile native extensions on first install. Xcode Command Line Tools might be required on macOS: `xcode-select --install`.
+- If you see `"dot" not found in path`, install Graphviz using Homebrew as shown above. The app will fall back to a NetworkX renderer if `dot` is missing, but Graphviz gives nicer, ranked layouts.
 
 ## Docker
 

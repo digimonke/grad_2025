@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from typing import Optional, Union, List, Tuple, Iterable, Set
 from sklearn.gaussian_process import GaussianProcessRegressor
-from pgmpy.models import BayesianModel
+import shutil
 
 def read_file(file):
     df = None
@@ -138,27 +138,38 @@ def sample_from_true_bn(n_samples: int = 1000, seed: int | None = 0) -> pd.DataF
 
 
 def draw_dag(G: nx.DiGraph, width_px: int | None = None):
-    """Render the ground-truth DAG using pydot and display in Streamlit."""
-    try:
-        pyd = to_pydot(G)
-        png_bytes = pyd.create_png()
-        if width_px is not None:
-            st.image(png_bytes, width=width_px)
-        else:
-            st.image(png_bytes, use_container_width=True)
-    except Exception as e:
-        st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
-        pos = nx.spring_layout(G, seed=0)
-        fig = plt.figure(figsize=(6, 4))
-        nx.draw(G, pos, with_labels=True, node_color="#ffcc00", node_size=1200, arrows=True)
-        buf = BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
-        plt.close(fig)
-        img = buf.getvalue()
-        if width_px is not None:
-            st.image(img, caption="Ground-truth DAG (5-node BN)", width=width_px)
-        else:
-            st.image(img, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
+    """Render the ground-truth DAG.
+
+    Preference order:
+    1) Graphviz via pydot (crisp, ranked) IF `dot` binary is available.
+    2) NetworkX + Matplotlib fallback otherwise (no Graphviz dependency).
+    """
+    # If `dot` is not available, skip pydot entirely to avoid noisy errors.
+    has_dot = shutil.which("dot") is not None
+    if has_dot:
+        try:
+            pyd = to_pydot(G)
+            png_bytes = pyd.create_png()
+            if width_px is not None:
+                st.image(png_bytes, width=width_px)
+            else:
+                st.image(png_bytes, use_container_width=True)
+            return
+        except Exception as e:
+            st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
+
+    # Fallback renderer (no Graphviz dependency)
+    pos = nx.spring_layout(G, seed=0)
+    fig = plt.figure(figsize=(6, 4))
+    nx.draw(G, pos, with_labels=True, node_color="#ffcc00", node_size=1200, arrows=True)
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    img = buf.getvalue()
+    if width_px is not None:
+        st.image(img, caption="Ground-truth DAG (5-node BN)", width=width_px)
+    else:
+        st.image(img, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
 
 
 # ----------------------------
@@ -177,28 +188,23 @@ def _dot_header(rankdir: str) -> List[str]:
 def pgmpy_model_to_dot(
     model,
     rankdir: str = "LR",
-    title: str | None = None,
     highlight_edges: Optional[Iterable[Tuple[str, str]]] = None,
     highlight_edges_dotted: Optional[Iterable[Tuple[str, str]]] = None,
 ) -> str:
-    """Build a Graphviz DOT string from a pgmpy BayesianModel without requiring graphviz/pydot.
+    """Render a pgmpy-like model (with .nodes() and .edges()) to DOT.
 
-    Parameters
-    - model: pgmpy.models.BayesianModel or any object exposing .nodes() and .edges()
-    - rankdir: 'LR' (left-to-right) or 'TB' (top-to-bottom)
-    - title: optional graph label
+    - highlight_edges: solid red edges to emphasize (present in model)
+    - highlight_edges_dotted: dashed red edges to emphasize (e.g., missing)
     """
-    # Gather nodes and edges defensively
     try:
-        nodes = list(model.nodes())
+        nodes = [str(n) for n in model.nodes()]
     except Exception:
         nodes = []
     try:
-        edges = list(model.edges())
+        edges = {(str(u), str(v)) for (u, v) in model.edges()}
     except Exception:
-        edges = []
+        edges = set()
 
-    # Normalize highlight sets to strings for easy matching
     hset: Set[Tuple[str, str]] = set()
     if highlight_edges is not None:
         for u, v in highlight_edges:
@@ -209,27 +215,21 @@ def pgmpy_model_to_dot(
             hset_dotted.add((str(u), str(v)))
 
     lines = _dot_header(rankdir)
-    if title:
-        lines.append(f"  labelloc=\"t\"; label=\"{title}\";")
-
     for n in nodes:
-        safe = str(n).replace("\"", "\\\"")
+        safe = n.replace("\"", "\\\"")
         lines.append(f"  \"{safe}\";")
 
-    for u, v in edges:
-        su_raw, sv_raw = str(u), str(v)
-        su = su_raw.replace("\"", "\\\"")
-        sv = sv_raw.replace("\"", "\\\"")
-        if (su_raw, sv_raw) in hset:
+    for u, v in sorted(list(edges)):
+        su = str(u).replace("\"", "\\\"")
+        sv = str(v).replace("\"", "\\\"")
+        if (u, v) in hset:
             lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", penwidth=2.5];")
-        elif (su_raw, sv_raw) in hset_dotted:
+        elif (u, v) in hset_dotted:
             lines.append(f"  \"{su}\" -> \"{sv}\" [color=\"#d62728\", style=dashed, penwidth=2.0];")
         else:
             lines.append(f"  \"{su}\" -> \"{sv}\" [penwidth=1.3];")
-
     lines.append("}")
     return "\n".join(lines)
-
 
 def bnlearn_dag_to_dot(
     dag,
@@ -437,40 +437,6 @@ def simulate_nonlinear_sem(
         X[:, j] = _simulate_single_equation(X_pa, float(scale_vec[j]))
     return X
 
-
-def pgmpy_to_adjacency(model) -> Tuple[np.ndarray, List[str]]:
-    """Convert a pgmpy BayesianModel to adjacency matrix and a topological node order."""
-    # Use networkx for a stable topological order
-    G = nx.DiGraph()
-    nodes = list(model.nodes())
-    G.add_nodes_from(nodes)
-    G.add_edges_from(model.edges())
-    topo_nodes = list(nx.topological_sort(G))
-    idx = {n: i for i, n in enumerate(topo_nodes)}
-    d = len(topo_nodes)
-    B = np.zeros((d, d), dtype=int)
-    for u, v in model.edges():
-        B[idx[u], idx[v]] = 1
-    return B, topo_nodes
-
-
-def simulate_nonlinear_sem_from_pgmpy(
-    model: BayesianModel,
-    n: int,
-    sem_type: str,
-    noise_scale: Optional[Union[float, List[float]]] = None,
-    as_dataframe: bool = True,
-):
-    """Simulate data from a pgmpy BayesianModel using a nonlinear SEM.
-
-    Returns a pandas DataFrame with columns ordered topologically (or a numpy array if as_dataframe=False).
-    """
-    B, node_order = pgmpy_to_adjacency(model)
-    X = simulate_nonlinear_sem(B, n=n, sem_type=sem_type, noise_scale=noise_scale)
-    if as_dataframe:
-        return pd.DataFrame(X, columns=node_order)
-    return X, node_order
-
 # ----------------------------
 # LiNGAM (linear, non-Gaussian) simulation
 # ----------------------------
@@ -541,81 +507,6 @@ def simulate_lingam(
         else:
             X[:, j] = sample_noise(n)
     return X
-
-def simulate_lingam_from_pgmpy(
-    model,
-    n: int,
-    coef_range: Tuple[float, float] = (0.5, 2.0),
-    noise: str = "laplace",
-    noise_scale: float = 1.0,
-    seed: int | None = None
-):
-    """Wrapper to simulate LiNGAM data from a pgmpy BayesianModel.
-
-    Returns a pandas DataFrame (topological order) by default.
-    """
-    B, node_order = pgmpy_to_adjacency(model)
-    X = simulate_lingam(B, n=n, coef_range=coef_range, noise=noise, noise_scale=noise_scale, seed=seed)
-    return pd.DataFrame(X, columns=node_order)
-
-
-# ----------------------------
-# DAG perturbation utilities
-# ----------------------------
-def add_random_edges_acyclic(
-    model,
-    n_add: int,
-    seed: Optional[int] = None,
-) -> Tuple[object, List[Tuple[str, str]]]:
-    """Return a new pgmpy BayesianModel with up to n_add random edges added without creating cycles.
-
-    - Does NOT modify the input model.
-    - Preserves nodes; ignores/does not preserve CPDs (structure-only).
-    - If fewer than n_add edges can be added without cycles, adds as many as possible.
-    """
-
-    nodes = list(model.nodes())
-    existing = set(model.edges())
-
-    # Build candidate edges (u->v) not present and u!=v
-    candidates: List[Tuple[str, str]] = []
-    for u in nodes:
-        for v in nodes:
-            if u == v:
-                continue
-            if (u, v) in existing:
-                continue
-            candidates.append((u, v))
-
-    rng = np.random.default_rng(seed)
-    rng.shuffle(candidates)
-
-    # Maintain a working NX graph to check reachability efficiently
-    G = nx.DiGraph()
-    G.add_nodes_from(nodes)
-    G.add_edges_from(existing)
-
-    added: List[Tuple[str, str]] = []
-    for u, v in candidates:
-        # Adding u->v would create a cycle iff there's already a path v->u
-        if nx.has_path(G, v, u):
-            continue
-        G.add_edge(u, v)
-        added.append((u, v))
-        if len(added) >= n_add:
-            break
-
-    # Build a fresh BayesianModel with new edges
-    if BayesianModel is not None:
-        new_model = BayesianModel()
-        new_model.add_nodes_from(nodes)
-        new_model.add_edges_from(G.edges())
-    else:
-        # Fallback: return the edges via networkx graph and caller can wrap
-        new_model = None  # type: ignore
-
-    return new_model if new_model is not None else G, added
-
 
 # ----------------------------
 # Draw from adjacency with directed (1) and undirected (-1)
