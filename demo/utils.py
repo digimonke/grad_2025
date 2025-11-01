@@ -10,6 +10,7 @@ from io import BytesIO
 from typing import Optional, Union, List, Tuple, Iterable, Set
 from sklearn.gaussian_process import GaussianProcessRegressor
 from pgmpy.models import BayesianModel
+import shutil
 
 def read_file(file):
     df = None
@@ -139,26 +140,32 @@ def sample_from_true_bn(n_samples: int = 1000, seed: int | None = 0) -> pd.DataF
 
 def draw_dag(G: nx.DiGraph, width_px: int | None = None):
     """Render the ground-truth DAG using pydot and display in Streamlit."""
-    try:
-        pyd = to_pydot(G)
-        png_bytes = pyd.create_png()
-        if width_px is not None:
-            st.image(png_bytes, width=width_px)
-        else:
-            st.image(png_bytes, use_container_width=True)
-    except Exception as e:
-        st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
-        pos = nx.spring_layout(G, seed=0)
-        fig = plt.figure(figsize=(6, 4))
-        nx.draw(G, pos, with_labels=True, node_color="#ffcc00", node_size=1200, arrows=True)
-        buf = BytesIO()
-        plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
-        plt.close(fig)
-        img = buf.getvalue()
-        if width_px is not None:
-            st.image(img, caption="Ground-truth DAG (5-node BN)", width=width_px)
-        else:
-            st.image(img, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
+    # If `dot` is not available, skip pydot entirely to avoid noisy errors.
+    has_dot = shutil.which("dot") is not None
+    if has_dot:
+        try:
+            pyd = to_pydot(G)
+            png_bytes = pyd.create_png()
+            if width_px is not None:
+                st.image(png_bytes, width=width_px)
+            else:
+                st.image(png_bytes, use_container_width=True)
+            return
+        except Exception as e:
+            st.warning(f"Không thể render bằng Graphviz/pydot ({e}). Dùng NetworkX thay thế.")
+
+    # Fallback renderer (no Graphviz dependency)
+    pos = nx.spring_layout(G, seed=0)
+    fig = plt.figure(figsize=(6, 4))
+    nx.draw(G, pos, with_labels=True, node_color="#ffcc00", node_size=1200, arrows=True)
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    plt.close(fig)
+    img = buf.getvalue()
+    if width_px is not None:
+        st.image(img, caption="Ground-truth DAG (5-node BN)", width=width_px)
+    else:
+        st.image(img, caption="Ground-truth DAG (5-node BN)", use_container_width=True)
 
 
 # ----------------------------
