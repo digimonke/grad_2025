@@ -19,6 +19,3 @@ csl_csm.render()
 
 # algorithms
 csl_algorithms.render()
-
-# toy example
-csl_toy_example.render()
