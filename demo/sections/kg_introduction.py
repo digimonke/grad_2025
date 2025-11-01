@@ -219,6 +219,7 @@ def render():
     st.divider()
     
     st.subheader("Ví dụ")
+    st.markdown("""Ví dụ minh hoạ sau đây gọi API để truy vấn 1 thực thể chính và 2 thực thể RDF bất kỳ có quan hệ với nó từ DBpedia dựa trên nhãn do người dùng nhập vào.""")
     col1, col2 = st.columns([3, 1])
     with col1:
         label = st.text_input("Nhãn thực thể", value="Việt Nam")
